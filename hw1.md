@@ -16,7 +16,9 @@ Given a disk with the following configurations:
 ### 1.1 Compute the disk capacity in GBs
 
 ```pseudocode
-Disk capacity (bytes) = 2 sides/platter * 4 platters/disks * 4096 tracks/side * 512 sectors/track * 1024 bytes/sector = 17,179,869,184 bytes
+Disk capacity (bytes)
+= 2 sides/platter * 4 platters/disks * 4096 tracks/side * 512 sectors/track * 1024 bytes/sector
+= 17,179,869,184 bytes
 ```
 
 ### 1.2 Compute the disk capacity in terms of the number of blocks it can hold
@@ -32,7 +34,11 @@ Disk capacity (blocks)
 Minimum time (best case): head is already on block that we want → only transfer
 time
 
-`Minimum time = 0.08 ms`
+```pseudocode
+Minimum time
+= 0.08 ms/sector * 8 sectors/block
+= 0.64 ms
+```
 
 Maximum time (worst case): head is on the opposite side of the disk, and the
 block we want is on the opposite side of the disk. And the block we want just
@@ -42,9 +48,9 @@ latency + transfer time.
 ```pseudocode
 Maximum time
 = seek time (warm-up + arm movement) + rotation time + transfer time
-= 2 ms + 4096 tracks / 400 tracks/ms + 1000 / (7200 rpm / 60) + 0.08 ms
-= 2 ms + 10.24 ms + 8.33 ms + 0.08 ms
-= 20.65 ms
+= 2 ms + 4096 tracks / 400 tracks/ms + 1000 / (7200 rpm / 60) + 0.08 ms * 8 sectors/block
+= 2 ms + 10.24 ms + 8.33 ms + 0.64 ms
+= 21.21 ms
 ```
 
 Average time (average case): block we want is 1/2 of the total number of tracks
@@ -53,9 +59,9 @@ away and 1/2 revolution away → seek time + rotation latency + transfer time
 ```pseudocode
 Average time
 = seek time (warm up + arm movement) + rotation time + transfer time
-= 2 ms + 4096 tracks / 2 / 400 tracks/ms + (1 / 2) * 1000 / (7200 rpm / 60) + 0.08 ms
-= 2 ms + 5.12 ms + 4.17 ms + 0.08 ms
-= 11.37 ms
+= 2 ms + 4096 tracks / 2 / 400 tracks/ms + (1 / 2) * 1000 / (7200 rpm / 60) + 0.08 ms/sector * 8 sectors/block
+= 2 ms + 5.12 ms + 4.17 ms + 0.64 ms
+= 11.93 ms
 ```
 
 ### 1.4 Given a file that consists of 200,000 records, and each record is 256 bytes. No record is allowed to span multiple blocks
@@ -81,9 +87,9 @@ Records per block
 ```pseudocode
 I/O time
 = warm-up + arm movement + rotation time + transfer time
-= 2 ms + 200 tracks / 400 tracks/ms + (1 / 2) * 1000 / (7200 rpm / 60) + 15 * 0.08 ms
-= 2 ms + 0.5 ms + 4.16 ms + 1.2 ms
-= 7.86 ms
+= 2 ms + 200 tracks / 400 tracks/ms + (1 / 2) * 1000 / (7200 rpm / 60) + 15 * 8 sectors/block * 0.08 ms/sector
+= 2 ms + 0.5 ms + 4.16 ms + 9.6 ms
+= 16.26 ms
 ```
 
 ### 1.6 To optimize the reading of the file, we may store adjacent blocks, e.g., B1, B2, B3, . . . , on the same cylinder. Given the disk configuration above, how many blocks can be aligned on the cylinder position to be read by the disk arms at the same time?
@@ -113,22 +119,22 @@ Remaining blocks
 
 Time to read each cylinder
 = seek time (warm up + arm movement) + rotation time + transfer time
-= 2 ms + 1 track / 400 tracks/ms + 1000 / (7200 rpm / 60) + 512 * 0.08 ms
-= 2 ms + 0.0025 ms + 8.33 ms + 40.96 ms
-= 51.29 ms
+= 2 ms + 1 track / 400 tracks/ms + 1000 / (7200 rpm / 60) + 512 * 8 sectors/block * 0.08 ms/sector
+= 2 ms + 0.0025 ms + 8.33 ms + 327.68 ms
+= 338.01 ms
 
 Time to read remaining blocks
-= 2 ms + 1 track / 400 tracks/ms + 1000 / (7200 rpm / 60) + 106 * 0.08 ms
-= 2 ms + 0.0025 ms + 8.33 ms + 8.48 ms
-= 18.81 ms
+= 2 ms + 1 track / 400 tracks/ms + 1000 / (7200 rpm / 60) + 106 * 8 sectors/block * 0.08 ms/sector
+= 2 ms + 0.0025 ms + 8.33 ms + 67.84 ms
+= 78.17 ms
 
 Assume that the head's initial position is 1/2 rotation and 1/2 of the total number
 of tracks away from the first block of the first cylinder.
 
 Time to read the entire file
-= 4096 tracks / 2 / 400 tracks/ms + (1 / 2) * 1000 / (7200 rpm / 60) - 2 ms - 0.0025 ms + 12 * 51.29 ms + 18.81 ms
-= 5.12 ms + 4.17 ms - 2 ms - 0.0025 ms + 12 * 51.29 ms + 18.81 ms
-= 641.58 ms
+= 4096 tracks / 2 / 400 tracks/ms + (1 / 2) * 1000 / (7200 rpm / 60) - 2 ms - 0.0025 ms + 12 * 338.01 ms + 78.17 ms
+= 5.12 ms + 4.17 ms - 2 ms - 0.0025 ms + 12 * 338.01 ms + 78.17 ms
+= 4141.58 ms
 ```
 
 ## Problem 2 (Record Organization, 30 Points (10 each))
