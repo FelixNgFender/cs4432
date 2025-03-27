@@ -117,7 +117,8 @@ Remaining blocks
 = 6,250 blocks - 12 * 512 blocks
 = 106 blocks
 
-Time to read each cylinder
+Time to read each cylinder: since head has to be idle for a full rotation, we have to warm it up
+again before seeking to the next cylinder
 = seek time (warm up + arm movement) + rotation time + transfer time
 = 2 ms + 1 track / 400 tracks/ms + 1000 / (7200 rpm / 60) + 512 * 8 sectors/block * 0.08 ms/sector
 = 2 ms + 0.0025 ms + 8.33 ms + 327.68 ms
@@ -175,10 +176,10 @@ Record data size:
 - DOB: 12 bytes data + 4 bytes padding
 - Gender: 1 byte data + 7 bytes padding
 - Address: 60 bytes data + 4 bytes padding
-- State: 4 bytes data
+- State: 4 bytes data + 4 bytes padding
 
-Total = 10 + 6 + 8 + 30 + 2 + 4 + 4 + 12 + 4 + 1 + 7 + 60 + 4 + 4
-      = 156 bytes
+Total = 10 + 6 + 8 + 30 + 2 + 4 + 4 + 12 + 4 + 1 + 7 + 60 + 4 + 4 + 4
+      = 160 bytes
 ```
 
 ### 2.3 Assuming a block of size 4K bytes, the block uses 80 bytes of its own header (block header). How many records can fit in one block? Report the number under the 4- and 8-bytes boundaries
@@ -190,7 +191,7 @@ Remaining space for records = 4096 bytes - 80 bytes = 4016 bytes
 
 So, 29 records can fit in one block under 4-byte boundaries.
 
-8-byte boundary: Records per block = 4016 bytes / 156 bytes/record = 25.74 records
+8-byte boundary: Records per block = 4016 bytes / 160 bytes/record = 25.1 records
 
 So, 25 records can fit in one block under 8-byte boundaries.
 ```
