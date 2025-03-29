@@ -8,22 +8,19 @@ RELEASE_CFLAGS=-std=c99 -Wall -O2 -DNDEBUG
 RELEASE_LFLAGS=
 VALGRIND_CFLAGS=-std=c99 -g -Wall -Wextra -Werror -pedantic -O2 # valgrind does not work together with asan
 VALGRIND_LFLAGS=
-TARGET_FLAGS=RR tests/16.in 4
+TARGET_FLAGS=
 
 # directories
-TARGET=scheduler
+TARGET=main
 SRC_DIR=src
-WORKLOADS_DIR=workloads
-TESTS_OUT_DIR=tests-out
 BIN_DIR=bin
 OBJ_DIR=obj
 SRC=$(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/*/*.c)
 HEADERS=$(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h)
 OBJ=$(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
-WORKLOADS=$(wildcard $(WORKLOADS_DIR)/*.in)
 
 # misc
-SUBMITNAME=project_3.zip
+SUBMITNAME=project_1.zip
 
 default: build
 
