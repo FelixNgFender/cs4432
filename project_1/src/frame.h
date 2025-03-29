@@ -43,7 +43,7 @@ const unsigned char *frame_get_record(const Frame *frame, uint8_t record_id);
  * `record_id` is 1-indexed and cannot exceed `NUM_RECORDS_PER_BLOCK`. Sets
  * the `dirty` flag if the record is modified.
  */
-void frame_set_record(Frame *frame, uint8_t record_id,
-                      const unsigned char *new_record);
+int frame_set_record(Frame *frame, uint8_t record_id,
+                     const unsigned char *new_record);
 
 #endif // FRAME_H

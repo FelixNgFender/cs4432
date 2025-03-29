@@ -94,6 +94,11 @@ void frame_set_pinned(Frame *frame, bool pinned) {
     return;
   }
 
+  if (frame->pinned == pinned) {
+    printf("Frame is already %s\n", pinned ? "pinned" : "unpinned");
+    return;
+  }
+
   frame->pinned = pinned;
 }
 
@@ -114,20 +119,21 @@ const unsigned char *frame_get_record(const Frame *frame, uint8_t record_id) {
   return frame->content + RECORD_OFFSET(record_id);
 }
 
-void frame_set_record(Frame *frame, uint8_t record_id,
-                      const unsigned char *new_record) {
+int frame_set_record(Frame *frame, uint8_t record_id,
+                     const unsigned char *new_record) {
   if (frame == NULL || record_id == 0 || record_id >= NUM_RECORDS_PER_BLOCK) {
-    return;
+    return -1;
   }
 
   // only update if record is different
   if (memcmp(frame->content + RECORD_OFFSET(record_id), new_record,
              RECORD_SIZE) == 0) {
     printf("New data for record #%d is the same. No writes.\n", record_id);
-    return;
+    return -1;
   }
 
   frame_set_dirty(frame, true);
   memcpy(frame->content + RECORD_OFFSET(record_id), new_record, RECORD_SIZE);
   printf("Wrote new data for record #%d\n", record_id);
+  return 0;
 }

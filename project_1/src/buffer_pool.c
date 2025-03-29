@@ -88,6 +88,51 @@ Frame *buffer_pool_get_frame_mutable(BufferPool *pool, uint8_t block_id) {
   return (Frame *)buffer_pool_get_frame(pool, block_id);
 }
 
+int buffer_pool_pin_block(BufferPool *pool, uint8_t block_id) {
+  if (pool == NULL || block_id == 0 || block_id > pool->num_frames) {
+    return -1;
+  }
+
+  int8_t frame_idx = buffer_pool_get_frame_idx(pool, block_id);
+  if (frame_idx == -1) {
+    printf("Block #%d is not in the buffer pool. Swapping in...\n", block_id);
+    frame_idx = buffer_pool_swap_in_block(pool, block_id);
+    if (frame_idx == -1) {
+      fprintf(stderr,
+              "The corresponding block #%d cannot be pinned because the memory "
+              "buffers are full.\n",
+              block_id);
+      return -1;
+    }
+  } else {
+    printf("Block #%d at frame #%d is already in the buffer pool.\n", block_id,
+           frame_idx);
+  }
+
+  frame_set_pinned(&pool->frames[frame_idx], true);
+  printf("Block #%d at frame #%d is pinned.\n", block_id, frame_idx);
+  return 0;
+}
+
+int buffer_pool_unpin_block(BufferPool *pool, uint8_t block_id) {
+  if (pool == NULL || block_id == 0 || block_id > pool->num_frames) {
+    return -1;
+  }
+
+  int8_t frame_idx = buffer_pool_get_frame_idx(pool, block_id);
+  if (frame_idx == -1) {
+    fprintf(stderr,
+            "The corresponding block #%d cannot be unpinned because it "
+            "is not in memory.\n",
+            block_id);
+    return -1;
+  }
+
+  frame_set_pinned(&pool->frames[frame_idx], false);
+  printf("Block #%d at frame #%d is unpinned.\n", block_id, frame_idx);
+  return 0;
+}
+
 int8_t buffer_pool_swap_in_block(BufferPool *pool, uint8_t block_id) {
   if (pool == NULL || block_id == 0 || block_id > pool->num_frames) {
     return -1;

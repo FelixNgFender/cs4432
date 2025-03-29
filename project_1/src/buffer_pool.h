@@ -35,5 +35,22 @@ const Frame *buffer_pool_get_frame(BufferPool *pool, uint8_t block_id);
  * `block_id` is 1-indexed.
  */
 Frame *buffer_pool_get_frame_mutable(BufferPool *pool, uint8_t block_id);
+/**
+ * Pin the requested block in the buffer pool.
+ *
+ * `block_id` is 1-indexed.
+ *
+ * Returns -1 if invalid input or if the buffer is full.
+ */
+int buffer_pool_pin_block(BufferPool *pool, uint8_t block_id);
+
+/**
+ * Unpin the requested block in the buffer pool.
+ *
+ * `block_id` is 1-indexed.
+ *
+ * Returns -1 if invalid input or if the block is not in memory.
+ */
+int buffer_pool_unpin_block(BufferPool *pool, uint8_t block_id);
 
 #endif // BUFFER_POOL_H
