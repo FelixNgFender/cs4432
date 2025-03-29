@@ -1,4 +1,5 @@
 #include "frame.h"
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -7,7 +8,7 @@ void frame_init(Frame *frame) {
     return;
   }
 
-  memset(frame->content, 0, RECORD_SIZE);
+  memset(frame->content, 0, BLOCK_SIZE);
   frame->block_id = -1;
   frame->dirty = false;
   frame->pinned = false;
@@ -18,8 +19,13 @@ void print_frame(const Frame *frame) {
     return;
   }
 
-  printf("Block_id %d, dirty %d, pinned %d\n", frame->block_id, frame->dirty,
-         frame->pinned);
+  printf("Block ID %d, dirty %d, pinned %d. Records:\n", frame->block_id,
+         frame->dirty, frame->pinned);
+  for (uint8_t i = 1; i <= NUM_RECORDS_PER_BLOCK; i++) {
+    printf("    Record ID: %d, bytes: ", i);
+    print_record(frame_get_record(frame, i));
+  }
+  printf("\n");
 }
 
 /* Returns 0 if frame is NULL, -1 if free */
@@ -37,6 +43,10 @@ const unsigned char *frame_get_content(const Frame *frame) {
   }
 
   return frame->content;
+}
+
+unsigned char *frame_get_content_mutable(Frame *frame) {
+  return (unsigned char *)frame_get_content(frame);
 }
 
 bool frame_is_dirty(const Frame *frame) {
@@ -68,7 +78,7 @@ void frame_set_content(Frame *frame, const unsigned char *content) {
     return;
   }
 
-  memcpy(frame->content, content, RECORD_SIZE);
+  memcpy(frame->content, content, BLOCK_SIZE);
 }
 
 void frame_set_dirty(Frame *frame, bool dirty) {
@@ -101,7 +111,7 @@ const unsigned char *frame_get_record(const Frame *frame, uint8_t record_id) {
     return NULL;
   }
 
-  return frame->content + (record_id - 1) * RECORD_SIZE;
+  return frame->content + RECORD_OFFSET(record_id);
 }
 
 void frame_set_record(Frame *frame, uint8_t record_id,
@@ -111,11 +121,11 @@ void frame_set_record(Frame *frame, uint8_t record_id,
   }
 
   // only update if record is different
-  if (memcmp(frame->content + (record_id - 1) * RECORD_SIZE, record,
-             RECORD_SIZE) == 0) {
+  if (memcmp(frame->content + RECORD_OFFSET(record_id), record, RECORD_SIZE) ==
+      0) {
     return;
   }
 
   frame_set_dirty(frame, true);
-  memcpy(frame->content + (record_id - 1) * RECORD_SIZE, record, RECORD_SIZE);
+  memcpy(frame->content + RECORD_OFFSET(record_id), record, RECORD_SIZE);
 }

@@ -9,7 +9,7 @@
  * Contains data for one disk block.
  */
 typedef struct Frame {
-  unsigned char content[RECORD_SIZE];
+  unsigned char content[BLOCK_SIZE];
   // 1-indexed. -1 indicates a free frame.
   int8_t block_id;
   bool dirty;
@@ -27,6 +27,10 @@ void frame_set_dirty(Frame *frame, bool dirty);
 void frame_set_pinned(Frame *frame, bool pinned);
 int8_t frame_get_block_id(const Frame *frame);
 const unsigned char *frame_get_content(const Frame *frame);
+/**
+ * Unsafe getter: Use only when modification is necessary
+ */
+unsigned char *frame_get_content_mutable(Frame *frame);
 bool frame_is_dirty(const Frame *frame);
 bool frame_is_pinned(const Frame *frame);
 

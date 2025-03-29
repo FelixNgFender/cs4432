@@ -49,7 +49,7 @@ int input_parse_and_validate_line(char *line, Args *args_out) {
 
   args_out->instruction_type = str_to_instruction(strtok(line, " "));
   switch (args_out->instruction_type) {
-  case INSTRUCTION_GET: // GET <record_number>
+  case INSTRUCTION_GET: // GET <record_id>
     record_number_str = strtok(NULL, "\n");
     if (input_strtouint32(record_number_str, &record_number) == -1) {
       return -1;
@@ -64,7 +64,7 @@ int input_parse_and_validate_line(char *line, Args *args_out) {
 
     args_out->record_number = record_number;
     break;
-  case INSTRUCTION_SET: // SET <record_number> <new_record>
+  case INSTRUCTION_SET: // SET <record_id> <new_record>
     record_number_str = strtok(NULL, " ");
     if (input_strtouint32(record_number_str, &record_number) == -1) {
       return -1;

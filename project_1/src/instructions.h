@@ -4,6 +4,10 @@
 #include "buffer_pool.h"
 #include <stdint.h>
 
+#define BLOCK_ID(record_number) (record_number / NUM_RECORDS_PER_BLOCK + 1)
+#define RECORD_ID(record_number) (record_number % NUM_RECORDS_PER_BLOCK)
+#define RECORD_OFFSET(record_id) ((record_id - 1) * RECORD_SIZE)
+
 typedef enum {
   INSTRUCTION_UNKNOWN,
   INSTRUCTION_GET,

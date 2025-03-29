@@ -1,4 +1,5 @@
 #include "buffer_pool.h"
+#include "disk.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -39,9 +40,10 @@ void print_buffer_pool(const BufferPool *pool) {
 
   printf("Buffer pool:\n");
   for (uint8_t i = 0; i < pool->num_frames; i++) {
-    printf("Frame %d: ", i + 1);
+    printf("  Frame %d: ", i + 1);
     print_frame(&pool->frames[i]);
   }
+  printf("\n");
 }
 
 int8_t buffer_pool_get_frame_idx(const BufferPool *pool, uint8_t block_id) {
@@ -65,10 +67,18 @@ const Frame *buffer_pool_get_frame(BufferPool *pool, uint8_t block_id) {
 
   int8_t frame_idx = buffer_pool_get_frame_idx(pool, block_id);
   if (frame_idx == -1) {
+    printf("Block #%d is not in the buffer pool. Swapping in...\n", block_id);
     frame_idx = buffer_pool_swap_in_block(pool, block_id);
     if (frame_idx == -1) {
+      fprintf(stderr,
+              "The corresponding block #%d cannot be accessed from disk "
+              "because the memory buffers are full.\n",
+              block_id);
       return NULL;
     }
+  } else {
+    printf("Block #%d at frame #%d is already in the buffer pool.\n", block_id,
+           frame_idx);
   }
 
   return &pool->frames[frame_idx];
@@ -84,16 +94,17 @@ int8_t buffer_pool_swap_in_block(BufferPool *pool, uint8_t block_id) {
   if (free_frame_idx == -1) {
     free_frame_idx = buffer_pool_evict_frame(pool);
     if (free_frame_idx == -1) {
-      fprintf(stderr,
-              "The corresponding block #%d cannot be accessed from disk "
-              "because the memory buffers are full.\n",
-              block_id);
       return -1;
     }
   }
 
-  // TODO: fseek();
+  Frame *free_frame = &pool->frames[free_frame_idx];
+  disk_read_block(block_id, frame_get_content_mutable(free_frame));
 
+  // Update frame metadata
+  frame_set_block_id(free_frame, block_id);
+  frame_set_dirty(free_frame, false);
+  frame_set_pinned(free_frame, false);
   return free_frame_idx;
 }
 
@@ -111,4 +122,26 @@ int8_t buffer_pool_find_free_frame_idx(const BufferPool *pool) {
   return -1;
 }
 
-int8_t buffer_pool_evict_frame(BufferPool *pool) {}
+int8_t buffer_pool_evict_frame(BufferPool *pool) {
+  if (pool == NULL) {
+    return -1;
+  }
+
+  for (uint8_t i = 0; i < pool->num_frames; i++) {
+    Frame *frame = &pool->frames[i];
+    if (!frame_is_pinned(frame)) {
+      // Write dirty frame to disk
+      if (frame_is_dirty(frame)) {
+        disk_write_block(frame_get_block_id(frame), frame_get_content(frame));
+      }
+
+      // Reset frame metadata
+      frame_set_block_id(frame, -1);
+      frame_set_dirty(frame, false);
+      frame_set_pinned(frame, false);
+      return i;
+    }
+  }
+
+  return -1;
+}

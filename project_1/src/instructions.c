@@ -1,11 +1,10 @@
 #include "instructions.h"
-#include "buffer_manager.h"
 #include "frame.h"
 #include <string.h>
 
 int instruction_get(BufferPool *pool, uint32_t record_number) {
   uint8_t block_id = BLOCK_ID(record_number);
-  uint8_t record_id = RECORD_ID(record_number);
+  uint8_t record_id = RECORD_ID(record_id);
   const Frame *frame = buffer_pool_get_frame(pool, block_id);
   const unsigned char *record = frame_get_record(frame, record_id);
   print_record(record);
