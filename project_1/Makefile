@@ -14,6 +14,7 @@ TARGET_FLAGS=
 TARGET=main
 SRC_DIR=src
 BIN_DIR=bin
+DATA_DIR=$(BIN_DIR)/Project1
 OBJ_DIR=obj
 SRC=$(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/*/*.c)
 HEADERS=$(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h)
@@ -36,6 +37,9 @@ release: build
 $(BIN_DIR):
 	mkdir -p $@
 
+$(DATA_DIR): $(BIN_DIR)
+	mkdir -p $@
+
 # compile
 $(OBJ): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
@@ -49,89 +53,13 @@ $(BIN_DIR)/$(TARGET): $(OBJ)
 run: build
 	$(BIN_DIR)/$(TARGET) $(TARGET_FLAGS)
 
-.PHONY: test
-test: build
-	@cp $(BIN_DIR)/$(TARGET) ./$(TARGET)
-	@echo "Binary moved to expected location. Now run ./run_tests.sh. Remember to clean up after yourself!"
-
-.PHONY: workloads
-workloads:
-	$(MAKE) --no-print-directory workload-1 && \
-	echo "=============================================================================" && \
-	$(MAKE) --no-print-directory workload-2 && \
-	echo "=============================================================================" && \
-	$(MAKE) --no-print-directory workload-3 && \
-	echo "=============================================================================" && \
-	$(MAKE) --no-print-directory workload-4 && \
-	echo "=============================================================================" && \
-	$(MAKE) --no-print-directory workload-5 && \
-	echo "============================================================================="
-
-.PHONY: workload-1
-workload-1: build
-workload-1: TARGET_FLAGS=RR $(WORKLOADS_DIR)/workload_1.in 3
-workload-1: run
-
-.PHONY: workload-2
-workload-2:
-	$(MAKE) --no-print-directory workload-2-fifo && \
-	echo "=============================================================================" && \
-	$(MAKE) --no-print-directory workload-2-sjf
-
-.PHONY: workload-2-fifo
-workload-2-fifo: build
-workload-2-fifo: TARGET_FLAGS=FIFO $(WORKLOADS_DIR)/workload_2.in 0
-workload-2-fifo: run
-
-.PHONY: workload-2-sjf
-workload-2-sjf: build
-workload-2-sjf: TARGET_FLAGS=SJF $(WORKLOADS_DIR)/workload_2.in 0
-workload-2-sjf: run
-
-.PHONY: workload-3
-workload-3:
-	$(MAKE) --no-print-directory workload-3-fifo && \
-	echo "=============================================================================" && \
-	$(MAKE) --no-print-directory workload-3-sjf && \
-	echo "=============================================================================" && \
-	$(MAKE) --no-print-directory workload-3-rr 
-
-.PHONY: workload-3-fifo
-workload-3-fifo: build
-workload-3-fifo: TARGET_FLAGS=FIFO $(WORKLOADS_DIR)/workload_3.in 0
-workload-3-fifo: run
-
-.PHONY: workload-3-sjf
-workload-3-sjf: build
-workload-3-sjf: TARGET_FLAGS=SJF $(WORKLOADS_DIR)/workload_3.in 0
-workload-3-sjf: run
-
-.PHONY: workload-3-rr
-workload-3-rr: build
-workload-3-rr: TARGET_FLAGS=RR $(WORKLOADS_DIR)/workload_3.in 3
-workload-3-rr: run
-
-.PHONY: workload-4
-workload-4: build
-workload-4: TARGET_FLAGS=RR $(WORKLOADS_DIR)/workload_4.in 3
-workload-4: run
-
-.PHONY: workload-5
-workload-5: build
-workload-5: TARGET_FLAGS=FIFO $(WORKLOADS_DIR)/workload_5.in 0
-workload-5: run
-
 .PHONY: debug
 debug: build
 	$(DEBUGGER) $(BIN_DIR)/$(TARGET) $(TARGET_FLAGS)
 
-.PHONY: clean-tests
-clean-tests:
-	$(RM) $(TESTS_OUT_DIR)/* ./$(TARGET)
-
 .PHONY: clean
-clean:  clean-tests
-	$(RM) $(OBJ) $(BIN_DIR)/$(TARGET)
+clean:
+	$(RM) $(OBJ) $(BIN_DIR)/$(TARGET) $(DATA_DIR)/*
 
 .PHONY: valgrind
 valgrind: CFLAGS=$(VALGRIND_CFLAGS)
@@ -142,4 +70,4 @@ valgrind: build
 .PHONY: submit
 submit:
 	$(RM) $(SUBMITNAME)
-	zip $(SUBMITNAME) $(SRC) $(HEADERS) $(WORKLOADS) Makefile README.*
+	zip $(SUBMITNAME) $(SRC) $(HEADERS) Makefile README.*

@@ -62,3 +62,5 @@ you fair grades
 Section III: section describes any design decisions that you do beyond the
 design guidelines given in this document. For example, any additional variables
 or methods or classes that you add.
+
+make PWD=/desired/path <target>
