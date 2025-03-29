@@ -1,6 +1,7 @@
 #include "instructions.h"
 #include "buffer_pool.h"
 #include "frame.h"
+#include <stdio.h>
 #include <string.h>
 
 int instruction_get(BufferPool *pool, uint32_t record_number) {
@@ -24,9 +25,16 @@ int instruction_set(BufferPool *pool, uint32_t record_number,
   uint8_t record_id = RECORD_ID(record_number);
   Frame *frame = buffer_pool_get_frame_mutable(pool, block_id);
   if (frame == NULL) {
+    fprintf(stderr, "Write was unsuccessful;\n");
     return -1;
   }
-  return frame_set_record(frame, record_id, new_record);
+  int rc = frame_set_record(frame, record_id, new_record);
+  if (rc == -1) {
+    fprintf(stderr, "Write was unsuccessful;\n");
+    return -1;
+  }
+  printf("Write was successful;\n");
+  return 0;
 }
 
 int instruction_pin(BufferPool *pool, uint8_t block_id) {

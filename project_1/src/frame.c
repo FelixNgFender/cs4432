@@ -19,11 +19,13 @@ void print_frame(const Frame *frame) {
     return;
   }
 
-  printf("Block ID %d, dirty %d, pinned %d. Records:\n", frame->block_id,
-         frame->dirty, frame->pinned);
-  for (uint8_t i = 1; i <= NUM_RECORDS_PER_BLOCK; i++) {
-    printf("    Record ID: %d, bytes: ", i);
-    print_record(frame_get_record(frame, i));
+  printf("Block ID %d, dirty %d, pinned %d.\n", frame->block_id, frame->dirty,
+         frame->pinned);
+  if (frame_get_block_id(frame) != -1) {
+    for (uint8_t i = 1; i <= NUM_RECORDS_PER_BLOCK; i++) {
+      printf("    Record ID: %d, data: ", i);
+      print_record(frame_get_record(frame, i));
+    }
   }
   printf("\n");
 }
@@ -94,11 +96,6 @@ void frame_set_pinned(Frame *frame, bool pinned) {
     return;
   }
 
-  if (frame->pinned == pinned) {
-    printf("Frame is already %s\n", pinned ? "pinned" : "unpinned");
-    return;
-  }
-
   frame->pinned = pinned;
 }
 
@@ -125,15 +122,7 @@ int frame_set_record(Frame *frame, uint8_t record_id,
     return -1;
   }
 
-  // only update if record is different
-  if (memcmp(frame->content + RECORD_OFFSET(record_id), new_record,
-             RECORD_SIZE) == 0) {
-    printf("New data for record #%d is the same. No writes.\n", record_id);
-    return -1;
-  }
-
   frame_set_dirty(frame, true);
   memcpy(frame->content + RECORD_OFFSET(record_id), new_record, RECORD_SIZE);
-  printf("Wrote new data for record #%d\n", record_id);
   return 0;
 }

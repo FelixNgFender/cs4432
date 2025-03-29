@@ -23,6 +23,7 @@ void buffer_manager_start(BufferManager *bm) {
   while (1) {
     if (input_getline(&line) < 1) {
       printf("End of file.\n");
+      free(line);
       return;
     } else {
       int rc = input_next_instruction(line, bm->pool);

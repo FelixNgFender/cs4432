@@ -56,6 +56,10 @@ $(BIN_DIR)/$(TARGET): $(OBJ)
 run: build
 	$(BIN_DIR)/$(TARGET) $(TARGET_FLAGS)
 
+.PHONY: test
+test: build
+	$(BIN_DIR)/$(TARGET) $(TARGET_FLAGS) < $(TEST_DIR)/in.txt
+
 .PHONY: debug
 debug: build
 	$(DEBUGGER) $(BIN_DIR)/$(TARGET) $(TARGET_FLAGS)
@@ -73,4 +77,4 @@ valgrind: build
 .PHONY: submit
 submit:
 	$(RM) $(SUBMITNAME)
-	zip $(SUBMITNAME) $(SRC) $(HEADERS) Makefile README.*
+	zip $(SUBMITNAME) $(SRC) $(HEADERS) $(TEST_DIR)/* Makefile README.*

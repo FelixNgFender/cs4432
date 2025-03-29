@@ -26,8 +26,9 @@ void buffer_pool_init(BufferPool *pool, uint8_t num_frames) {
   if (pool == NULL || num_frames == 0) {
     return;
   }
-
-  pool->last_evicted_idx = -1;
+  // Last page so we can start from the beginning
+  // when we start
+  pool->last_evicted_idx = num_frames - 1;
   pool->num_frames = num_frames;
   for (uint8_t i = 0; i < num_frames; i++) {
     frame_init(&pool->frames[i]);
@@ -68,18 +69,19 @@ const Frame *buffer_pool_get_frame(BufferPool *pool, uint8_t block_id) {
 
   int8_t frame_idx = buffer_pool_get_frame_idx(pool, block_id);
   if (frame_idx == -1) {
-    printf("Block #%d is not in the buffer pool. Swapping in...\n", block_id);
     frame_idx = buffer_pool_swap_in_block(pool, block_id);
     if (frame_idx == -1) {
       fprintf(stderr,
               "The corresponding block #%d cannot be accessed from disk "
-              "because the memory buffers are full.\n",
+              "because the memory buffers are full\n",
               block_id);
       return NULL;
     }
+    printf("Brought File %d from disk; Placed in Frame %d\n", block_id,
+           frame_idx + 1);
   } else {
-    printf("Block #%d at frame #%d is already in the buffer pool.\n", block_id,
-           frame_idx);
+    printf("File %d already in memory; Located in Frame %d\n", block_id,
+           frame_idx + 1);
   }
 
   return &pool->frames[frame_idx];
@@ -96,22 +98,25 @@ int buffer_pool_pin_block(BufferPool *pool, uint8_t block_id) {
 
   int8_t frame_idx = buffer_pool_get_frame_idx(pool, block_id);
   if (frame_idx == -1) {
-    printf("Block #%d is not in the buffer pool. Swapping in...\n", block_id);
     frame_idx = buffer_pool_swap_in_block(pool, block_id);
     if (frame_idx == -1) {
       fprintf(stderr,
               "The corresponding block #%d cannot be pinned because the memory "
-              "buffers are full.\n",
+              "buffers are full\n",
               block_id);
       return -1;
     }
-  } else {
-    printf("Block #%d at frame #%d is already in the buffer pool.\n", block_id,
-           frame_idx);
   }
 
-  frame_set_pinned(&pool->frames[frame_idx], true);
-  printf("Block #%d at frame #%d is pinned.\n", block_id, frame_idx);
+  printf("File %d pinned in Frame %d; ", block_id, frame_idx + 1);
+  Frame *frame = &pool->frames[frame_idx];
+  if (frame_is_pinned(frame)) {
+    printf("Already pinned\n");
+    return 0;
+  }
+
+  frame_set_pinned(frame, true);
+  printf("Not already pinned\n");
   return 0;
 }
 
@@ -123,14 +128,21 @@ int buffer_pool_unpin_block(BufferPool *pool, uint8_t block_id) {
   int8_t frame_idx = buffer_pool_get_frame_idx(pool, block_id);
   if (frame_idx == -1) {
     fprintf(stderr,
-            "The corresponding block #%d cannot be unpinned because it "
+            "The corresponding block %d cannot be unpinned because it "
             "is not in memory.\n",
             block_id);
     return -1;
   }
 
-  frame_set_pinned(&pool->frames[frame_idx], false);
-  printf("Block #%d at frame #%d is unpinned.\n", block_id, frame_idx);
+  printf("File %d is unpinned in frame %d; ", block_id, frame_idx + 1);
+  Frame *frame = &pool->frames[frame_idx];
+  if (!frame_is_pinned(frame)) {
+    printf("Frame was already unpinned\n");
+    return 0;
+  }
+
+  frame_set_pinned(frame, false);
+  printf("Frame %d was not already unpinned\n", frame_idx + 1);
   return 0;
 }
 
@@ -148,13 +160,13 @@ int8_t buffer_pool_swap_in_block(BufferPool *pool, uint8_t block_id) {
     }
   }
 
-  Frame *free_frame = &pool->frames[free_frame_idx];
-  disk_read_block(block_id, frame_get_content_mutable(free_frame));
+  Frame *new_frame = &pool->frames[free_frame_idx];
+  disk_read_block(block_id, frame_get_content_mutable(new_frame));
 
   // Update frame metadata
-  frame_set_block_id(free_frame, block_id);
-  frame_set_dirty(free_frame, false);
-  frame_set_pinned(free_frame, false);
+  frame_set_block_id(new_frame, block_id);
+  frame_set_dirty(new_frame, false);
+  frame_set_pinned(new_frame, false);
   return free_frame_idx;
 }
 
@@ -181,7 +193,16 @@ int8_t buffer_pool_evict_frame(BufferPool *pool) {
 
   for (uint8_t i = 0; i < pool->num_frames; i++) {
     uint8_t idx = (start_idx + i) % pool->num_frames;
-    Frame *frame = &pool->frames[i];
+    Frame *frame = &pool->frames[idx];
+    int8_t block_id = frame_get_block_id(frame);
+
+    if (block_id == -1) {
+      fprintf(
+          stderr,
+          "Error: Frame %d is still empty. No reasons to evict any frames.\n",
+          idx + 1);
+      return -1;
+    }
 
     if (frame_is_pinned(frame)) {
       continue;
@@ -189,8 +210,10 @@ int8_t buffer_pool_evict_frame(BufferPool *pool) {
 
     // Write dirty frame to disk
     if (frame_is_dirty(frame)) {
-      disk_write_block(frame_get_block_id(frame), frame_get_content(frame));
+      disk_write_block(block_id, frame_get_content(frame));
     }
+
+    printf("Evicted file %d from Frame %d\n", block_id, idx + 1);
 
     // Reset frame metadata
     frame_set_block_id(frame, -1);
