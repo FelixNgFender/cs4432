@@ -11,11 +11,18 @@ int instruction_get(BufferPool *pool, uint32_t record_number) {
   return 0;
 }
 
-int instruction_set(uint32_t record_number, const unsigned char *new_record) {}
+int instruction_set(BufferPool *pool, uint32_t record_number,
+                    const unsigned char *new_record) {
+  uint8_t block_id = BLOCK_ID(record_number);
+  uint8_t record_id = RECORD_ID(record_number);
+  Frame *frame = buffer_pool_get_frame_mutable(pool, block_id);
+  frame_set_record(frame, record_id, new_record);
+  return 0;
+}
 
-int instruction_pin(uint8_t block_id) {}
+int instruction_pin(BufferPool *pool, uint8_t block_id) {}
 
-int instruction_unpin(uint8_t block_id) {}
+int instruction_unpin(BufferPool *pool, uint8_t block_id) {}
 
 const char *instruction_to_str(Instruction i) {
   switch (i) {

@@ -28,5 +28,12 @@ int8_t buffer_pool_get_frame_idx(const BufferPool *pool, uint8_t block_id);
  * `block_id` is 1-indexed.
  */
 const Frame *buffer_pool_get_frame(BufferPool *pool, uint8_t block_id);
+/**
+ * Get the mutable frame containing the specified `block_id` from the buffer
+ * pool.
+ *
+ * `block_id` is 1-indexed.
+ */
+Frame *buffer_pool_get_frame_mutable(BufferPool *pool, uint8_t block_id);
 
 #endif // BUFFER_POOL_H

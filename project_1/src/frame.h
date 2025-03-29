@@ -44,6 +44,6 @@ const unsigned char *frame_get_record(const Frame *frame, uint8_t record_id);
  * the `dirty` flag if the record is modified.
  */
 void frame_set_record(Frame *frame, uint8_t record_id,
-                      const unsigned char *record);
+                      const unsigned char *new_record);
 
 #endif // FRAME_H

@@ -84,6 +84,10 @@ const Frame *buffer_pool_get_frame(BufferPool *pool, uint8_t block_id) {
   return &pool->frames[frame_idx];
 }
 
+Frame *buffer_pool_get_frame_mutable(BufferPool *pool, uint8_t block_id) {
+  return (Frame *)buffer_pool_get_frame(pool, block_id);
+}
+
 int8_t buffer_pool_swap_in_block(BufferPool *pool, uint8_t block_id) {
   if (pool == NULL || block_id == 0 || block_id > pool->num_frames) {
     return -1;
