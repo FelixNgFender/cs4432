@@ -14,7 +14,7 @@ typedef struct Args {
 int input_parse_and_validate_line(char *line, Args *args_out);
 int input_strtouint8(char *in_str, uint8_t *out_uint8);
 int input_strtouint32(char *in_str, uint32_t *out_uint32);
-int input_dispatch_instruction(Args *args, BufferPool *pool);
+int input_dispatch_instruction(BufferPool *pool, Args *args);
 void handle_invalid_instruction(Instruction instruction_type);
 
 int input_next_instruction(char *line, BufferPool *pool) {
@@ -29,11 +29,11 @@ int input_next_instruction(char *line, BufferPool *pool) {
     return -1;
   }
 
-  return input_dispatch_instruction(&args, pool);
+  return input_dispatch_instruction(pool, &args);
 }
 
 ssize_t input_getline(char **line) {
-  printf("Instruction? ");
+  printf("The program is ready for the next command\n");
   size_t size = 0;
   ssize_t chars_read;
   chars_read = getline(line, &size, stdin);
@@ -155,7 +155,7 @@ int input_strtouint32(char *in_str, uint32_t *out_uint32) {
   return 0;
 }
 
-int input_dispatch_instruction(Args *args, BufferPool *pool) {
+int input_dispatch_instruction(BufferPool *pool, Args *args) {
   Instruction instruction_type = args->instruction_type;
   switch (instruction_type) {
   case INSTRUCTION_GET:

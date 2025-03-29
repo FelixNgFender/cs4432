@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 void get_block_path(uint8_t block_id, char *path_out) {
-  snprintf(path_out, NAME_MAX, "%s/F%d", DISK_DIR, block_id);
+  snprintf(path_out, NAME_MAX, "%s/F%d.txt", DISK_DIR, block_id);
 }
 
 void disk_read_block(uint8_t block_id, unsigned char *dst) {

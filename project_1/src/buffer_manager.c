@@ -21,8 +21,6 @@ void buffer_manager_start(BufferManager *bm) {
   }
   char *line = NULL;
   while (1) {
-    printf("The program is ready for the next command\n");
-
     if (input_getline(&line) < 1) {
       printf("End of file.\n");
       return;

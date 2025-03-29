@@ -48,7 +48,7 @@ void print_buffer_pool(const BufferPool *pool) {
 }
 
 int8_t buffer_pool_get_frame_idx(const BufferPool *pool, uint8_t block_id) {
-  if (pool == NULL || block_id == 0 || block_id > pool->num_frames) {
+  if (pool == NULL || block_id == 0) {
     return -1;
   }
 
@@ -62,7 +62,7 @@ int8_t buffer_pool_get_frame_idx(const BufferPool *pool, uint8_t block_id) {
 }
 
 const Frame *buffer_pool_get_frame(BufferPool *pool, uint8_t block_id) {
-  if (pool == NULL || block_id == 0 || block_id > pool->num_frames) {
+  if (pool == NULL || block_id == 0) {
     return NULL;
   }
 
@@ -90,7 +90,7 @@ Frame *buffer_pool_get_frame_mutable(BufferPool *pool, uint8_t block_id) {
 }
 
 int buffer_pool_pin_block(BufferPool *pool, uint8_t block_id) {
-  if (pool == NULL || block_id == 0 || block_id > pool->num_frames) {
+  if (pool == NULL || block_id == 0) {
     return -1;
   }
 
@@ -116,7 +116,7 @@ int buffer_pool_pin_block(BufferPool *pool, uint8_t block_id) {
 }
 
 int buffer_pool_unpin_block(BufferPool *pool, uint8_t block_id) {
-  if (pool == NULL || block_id == 0 || block_id > pool->num_frames) {
+  if (pool == NULL || block_id == 0) {
     return -1;
   }
 
@@ -135,7 +135,7 @@ int buffer_pool_unpin_block(BufferPool *pool, uint8_t block_id) {
 }
 
 int8_t buffer_pool_swap_in_block(BufferPool *pool, uint8_t block_id) {
-  if (pool == NULL || block_id == 0 || block_id > pool->num_frames) {
+  if (pool == NULL || block_id == 0) {
     return -1;
   }
 

@@ -26,11 +26,7 @@ int instruction_set(BufferPool *pool, uint32_t record_number,
   if (frame == NULL) {
     return -1;
   }
-  int rc = frame_set_record(frame, record_id, new_record);
-  if (rc == -1) {
-    return -1;
-  }
-  return 0;
+  return frame_set_record(frame, record_id, new_record);
 }
 
 int instruction_pin(BufferPool *pool, uint8_t block_id) {
