@@ -8,6 +8,8 @@
  */
 typedef struct BufferPool {
   uint8_t num_frames;
+  // Index of the last evicted frame
+  uint8_t last_evicted_idx;
   // Very cool feature of C99: flexible array member.
   // This allows structs to have a variable length array at runtime. The array
   // must be the last member of the struct.

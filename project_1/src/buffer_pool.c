@@ -27,6 +27,7 @@ void buffer_pool_init(BufferPool *pool, uint8_t num_frames) {
     return;
   }
 
+  pool->last_evicted_idx = -1;
   pool->num_frames = num_frames;
   for (uint8_t i = 0; i < num_frames; i++) {
     frame_init(&pool->frames[i]);
@@ -176,20 +177,28 @@ int8_t buffer_pool_evict_frame(BufferPool *pool) {
     return -1;
   }
 
-  for (uint8_t i = 0; i < pool->num_frames; i++) {
-    Frame *frame = &pool->frames[i];
-    if (!frame_is_pinned(frame)) {
-      // Write dirty frame to disk
-      if (frame_is_dirty(frame)) {
-        disk_write_block(frame_get_block_id(frame), frame_get_content(frame));
-      }
+  uint8_t start_idx = (pool->last_evicted_idx + 1) % pool->num_frames;
 
-      // Reset frame metadata
-      frame_set_block_id(frame, -1);
-      frame_set_dirty(frame, false);
-      frame_set_pinned(frame, false);
-      return i;
+  for (uint8_t i = 0; i < pool->num_frames; i++) {
+    uint8_t idx = (start_idx + i) % pool->num_frames;
+    Frame *frame = &pool->frames[i];
+
+    if (frame_is_pinned(frame)) {
+      continue;
     }
+
+    // Write dirty frame to disk
+    if (frame_is_dirty(frame)) {
+      disk_write_block(frame_get_block_id(frame), frame_get_content(frame));
+    }
+
+    // Reset frame metadata
+    frame_set_block_id(frame, -1);
+    frame_set_dirty(frame, false);
+    frame_set_pinned(frame, false);
+
+    pool->last_evicted_idx = idx;
+    return idx;
   }
 
   return -1;
