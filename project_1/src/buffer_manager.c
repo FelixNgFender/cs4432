@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 void buffer_manager_init(BufferManager *bm, uint8_t buffer_pool_size) {
-  if (bm == NULL || buffer_pool_size < 0 || buffer_pool_size > UINT8_MAX) {
+  if (bm == NULL || buffer_pool_size == 0) {
     return;
   }
 

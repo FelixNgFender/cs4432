@@ -41,7 +41,6 @@ ssize_t input_getline(char **line) {
 }
 
 int input_parse_and_validate_line(char *line, Args *args_out) {
-  Instruction instruction_type;
   uint32_t record_number;
   char *record_number_str;
   uint8_t block_id;
@@ -78,11 +77,19 @@ int input_parse_and_validate_line(char *line, Args *args_out) {
     }
 
     char *new_record_str = strtok(NULL, "\n");
-    if (new_record_str == NULL || strlen(new_record_str) >= RECORD_SIZE) {
+    unsigned long new_record_len = strlen(new_record_str);
+    // Strip double quotes
+    if (new_record_str[0] == '"' && new_record_str[new_record_len - 1] == '"') {
+      new_record_str[new_record_len - 1] = '\0';
+      new_record_str++;
+      new_record_len -= 2;
+    }
+    if (new_record_str == NULL || new_record_len > RECORD_SIZE) {
+      printf("strlen(new_record_str): %ld\n", strlen(new_record_str));
       fprintf(
           stderr,
           "Error: Invalid or too large new record. Maximum size is %d bytes.\n",
-          RECORD_SIZE - 1);
+          RECORD_SIZE);
       return -1;
     }
     strncpy((char *)args_out->new_record, new_record_str, RECORD_SIZE);

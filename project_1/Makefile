@@ -2,19 +2,21 @@
 CC=gcc
 LINKER=$(CC)
 DEBUGGER=gdb
-CFLAGS=-std=c99 -g -Wall -Wextra -Werror -pedantic -O2 -fsanitize=address
+CFLAGS=-g -Wall -Wextra -Werror -pedantic -O2 -fsanitize=address
 LFLAGS=-fsanitize=address
-RELEASE_CFLAGS=-std=c99 -Wall -O2 -DNDEBUG
+RELEASE_CFLAGS=-Wall -O2 -DNDEBUG
 RELEASE_LFLAGS=
-VALGRIND_CFLAGS=-std=c99 -g -Wall -Wextra -Werror -pedantic -O2 # valgrind does not work together with asan
+VALGRIND_CFLAGS=-g -Wall -Wextra -Werror -pedantic -O2 # valgrind does not work together with asan
 VALGRIND_LFLAGS=
-TARGET_FLAGS=
+TARGET_FLAGS=3
 
 # directories
 TARGET=main
 SRC_DIR=src
 BIN_DIR=bin
-DATA_DIR=$(BIN_DIR)/Project1
+TEST_DIR=Project1
+TEST_DATA=$(wildcard $(TEST_DIR)/F*.txt)
+TEST_COPY_DIR=$(BIN_DIR)/$(TEST_DIR)
 OBJ_DIR=obj
 SRC=$(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/*/*.c)
 HEADERS=$(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h)
@@ -26,7 +28,7 @@ SUBMITNAME=project_1.zip
 default: build
 
 .PHONY: build
-build: $(BIN_DIR) $(BIN_DIR)/$(TARGET)
+build: $(BIN_DIR) $(BIN_DIR)/$(TARGET) $(TEST_COPY_DIR)
 
 .PHONY: release
 release: CFLAGS=$(RELEASE_CFLAGS)
@@ -37,8 +39,9 @@ release: build
 $(BIN_DIR):
 	mkdir -p $@
 
-$(DATA_DIR): $(BIN_DIR)
+$(TEST_COPY_DIR): $(BIN_DIR)
 	mkdir -p $@
+	cp $(TEST_DATA) $@
 
 # compile
 $(OBJ): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
@@ -59,7 +62,7 @@ debug: build
 
 .PHONY: clean
 clean:
-	$(RM) $(OBJ) $(BIN_DIR)/$(TARGET) $(DATA_DIR)/*
+	$(RM) $(OBJ) $(BIN_DIR)/$(TARGET) $(TEST_COPY_DIR)/*
 
 .PHONY: valgrind
 valgrind: CFLAGS=$(VALGRIND_CFLAGS)

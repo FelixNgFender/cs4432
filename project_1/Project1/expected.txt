@@ -1,0 +1,22 @@
+Write was successful; Brought File 5 from disk; Placed in Frame 1
+F05-Rec450, Jane Do, 10 Hill Rd, age020.; File 5 already in memory; Located in Frame 1
+F01-Rec020, Name020, address020, age020.; Brought file 1 from disk; Placed in Frame 2
+Write was successful; File 5 already in memory; Located in Frame 1
+File 5 pinned in Frame 1; Not already pinned
+The corresponding block 3 cannot be unpinned because it is not in memory.
+F05-Rec450, John Do, 23 Lake Ln, age056.; File 5 already in memory; Located in Frame 1
+File 5 pinned in Frame 1; Already pinned
+F07-Rec646, Name646, address646, age646.; Brought file 7 from disk; Placed in Frame 3
+File 3 pinned in Frame 2; Not already pinned; Evicted file 1 from Frame 2
+Write was successful; Brought File 1 from disk; Placed in Frame 3; Evicted file 7 from Frame 3
+File 1 in frame 3 is unpinned; Frame was already unpinned
+F04-Rec355, Name355, address355, age355.; Brought file 4 from disk; Placed in Frame 3; Evicted file 1 from frame 3
+File 2 is pinned in Frame 3; Frame 3 was not already pinned; Evicted file 4 from frame 3
+F02-Rec156, Name156, address156, age156.; File 2 already in memory; Located in Frame 3
+The corresponding block #1 cannot be accessed from disk because the memory buffers are full; Write was unsuccessful 
+The corresponding block 7 cannot be pinned because the memory buffers are full
+The corresponding block #1 cannot be accessed from disk because the memory buffers are full
+File 3 is unpinned in frame 2; Frame 2 was not already unpinned
+File 2 is unpinned in frame 3; Frame 3 was not already unpinned
+F01-Rec010, Tim Boe, 09 Deer Dr, age009.; Brought file 1 from disk; Placed in Frame 2; Evicted file 3 from frame 2
+File 6 pinned in Frame 3; Not already pinned; Evicted file 2 from frame 3

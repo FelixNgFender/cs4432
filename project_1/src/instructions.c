@@ -5,7 +5,7 @@
 
 int instruction_get(BufferPool *pool, uint32_t record_number) {
   uint8_t block_id = BLOCK_ID(record_number);
-  uint8_t record_id = RECORD_ID(record_id);
+  uint8_t record_id = RECORD_ID(record_number);
   const Frame *frame = buffer_pool_get_frame(pool, block_id);
   if (frame == NULL) {
     return -1;
