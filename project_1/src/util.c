@@ -12,8 +12,7 @@ long strtol_or_exit(const char *nptr) {
       ((LONG_MIN == n || LONG_MAX == n) && ERANGE == errno) || n > INT_MAX ||
       n < INT_MIN) {
     fprintf(stderr, "Invalid number: %s %ld\n", nptr, n);
-    perror("Error converting string to integer");
-    exit(EXIT_FAILURE);
+    handle_error("Error converting string to integer");
   }
   return n;
 }
