@@ -125,3 +125,97 @@ The number of 2nd-level index entries that can fit in a block is `292`. To index
 all blocks in the 1st-level index, we need `ceil(3,425 / 292) = 12` blocks for
 the 2nd-level index. The total index size (both levels) will be
 `3,425 + 12 = 3,437` blocks.
+
+Problem 3: B+ Tree Indexing (30 Points)
+
+![tree1](./tree1.png)
+
+Consider the B+ tree in Figure 14.13 from the course textbook (Page 636).
+Describe how each of the following operations would proceed. If it modifies the
+tree, draw the revised tree. Assume that an insert that does not find space in
+its node will trigger a splitting of this node. You can make additional
+assumptions, but you must always spell them out. Assume the minimum number of
+keys allowed in an internal node is Floor(node size / 2) = 1
+
+1. Lookup record with search key 35. Indicate which index pages are accessed?
+   Write them in the order of their access. E.g., label each index node with a
+   label like ”N1”, ”N2”, ..., and the specify the sequence of touched nodes to
+   search for key 35.
+
+N1, N3, N8
+
+2. Lookup all records within the range [9, 21]. Indicate which index pages are
+   accessed? As in 1, write them in the order of their access.
+
+N1, N2, N5, N6, N7
+
+3. Insert a record with key 4. Show the modified tree.
+
+![tree3](./tree3.png)
+
+Find correct leaf: N1, N2, N4
+
+Put 4 into N4. Since N4 is full, must split leaf node N4 and redistribute
+entries into \[2, 3\] (L) and \[4, 5\] (Lnew).
+
+Copy up middle key (4) to parent N2.
+
+Insert index entry pointing to Lnew (4 new) into parent of L (N2).
+
+4. To the tree after the above insertion, insert record with key 14, then record
+   with key 15, then record with key 16. Show the tree after every insert.
+
+![tree4-1](./tree4-1.png)
+
+Insertion 14:
+
+Find correct leaf: N1, N3, N6
+
+Put 14 into N6. Since N6 is full, must split leaf node N6 and redistribute
+entries into \[13, 14\] (L) and \[17, 19\] (Lnew).
+
+Copy up middle key (17) to parent N3.
+
+Insert index entry pointing to Lnew (6 new) into parent of L (N3).
+
+Since N3 is full, we split and redistribute entries into \[17, 23\] (3) and
+\[31, 43\] (3 new). Since it's an internal node, we push up the middle key (31)
+to parent of N3 (N1).
+
+Insert index entry pointing to 3 new into parent of N3 (N1).
+
+![tree4-2](./tree4-2.png)
+
+Insertion 15:
+
+Find correct leaf: N1, N3, N6
+
+Put 15 into N6. Since N6 is not full, we are done.
+
+![tree4-3](./tree4-3.png)
+
+Insertion 16:
+
+Find correct leaf: N1, N3, N6
+
+Put 16 into N6. Since N6 is full, must split leaf node N6 and redistribute
+entries into \[13, 14\] (3) and \[15, 16\] (3 newer).
+
+Copy up middle key (15) to parent N3.
+
+Insert index entry pouinting to 3 newer into parent of L (N3).
+
+5. After the insertions in steps 3 & 4, lookup records within the range [6, 13].
+   Indicate which index pages are accessed? Write them in the order of their
+   access.
+
+N1, N2, N4 new, N5, N6
+
+6. After the insertions in 3 & 4, delete the record with key 23. Show the
+   modified tree.
+
+Find correct leaf: N1, N3, N7
+
+![tree6](./tree6.png)
+
+Remove 23 from N7. Since N7 has at least 1 key left, we are done.
