@@ -6,6 +6,10 @@
 #include <stdint.h>
 
 typedef struct BufferManager {
+  // NOTE: Actual subtle bug here. Since BufferPool has a flexible array
+  // member, it cannot be used as a member of another struct.
+  // See
+  // https://wiki.sei.cmu.edu/confluence/display/c/DCL38-C.+Use+the+correct+syntax+when+declaring+a+flexible+array+member
   BufferPool *pool;
 } BufferManager;
 
