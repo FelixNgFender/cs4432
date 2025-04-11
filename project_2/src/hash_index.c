@@ -14,7 +14,7 @@ void hash_index_init(HashIndex *index) {
   }
 
   for (size_t i = 0; i < HASH_INDEX_SIZE; i++) {
-    index_entry_init(&index->buckets[i]->entry);
+    index->buckets[i] = NULL;
   }
 }
 
@@ -23,6 +23,7 @@ void hash_index_print(const HashIndex *index) {
     return;
   }
 
+  printf("Hash Index:\n");
   size_t count = 0;
   for (size_t i = 0; i < HASH_INDEX_SIZE; i++) {
     const HashNode *node = index->buckets[i];

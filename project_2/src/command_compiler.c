@@ -21,10 +21,6 @@ int input_parse_and_validate_line(char *line, CommandArgs *args_out);
  * freed by the user program even if `getline()` failed.
  */
 ssize_t input_getline(char **line);
-/*
- * Validates the next line of instruction.
- */
-CommandArgs input_next_command(char *line);
 
 void command_compiler_init(CommandCompiler *cc) {
   if (cc == NULL) {
@@ -54,12 +50,21 @@ void command_compiler_start(CommandCompiler *cc) {
       free(line);
       return;
     } else {
-      CommandArgs args = input_next_command(line);
-      if (args.command_type == COMMAND_UNKNOWN || args.v1 == 0) {
+
+      CommandArgs args = {
+          .command_type = COMMAND_UNKNOWN,
+          .table_name = DEFAULT_TABLE_NAME,
+          .index_column = DEFAULT_INDEX_COLUMN,
+          .v1 = 0,
+          .v2 = 0,
+      };
+
+      if (input_parse_and_validate_line(line, &args) == -1) {
         printf("Error: Invalid command.\n");
         free(line);
         continue;
       }
+
       QueryPlan plan = query_plan_create(args.command_type, args.table_name,
                                          args.index_column, args.v1, args.v2);
       if (execution_engine_execute_plan(&cc->execution_engine, plan) == -1) {
@@ -68,23 +73,6 @@ void command_compiler_start(CommandCompiler *cc) {
     }
     free(line);
   }
-}
-
-CommandArgs input_next_command(char *line) {
-  CommandArgs args = {
-      .command_type = COMMAND_UNKNOWN,
-      .table_name = DEFAULT_TABLE_NAME,
-      .index_column = DEFAULT_INDEX_COLUMN,
-      .v1 = 0,
-      .v2 = 0,
-  };
-
-  if (input_parse_and_validate_line(line, &args) == -1) {
-    fprintf(stderr, "Error: Failed to parse command.\n");
-    return args;
-  }
-
-  return args;
 }
 
 ssize_t input_getline(char **line) {

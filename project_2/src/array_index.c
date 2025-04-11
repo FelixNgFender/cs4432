@@ -16,6 +16,7 @@ void array_index_print(const ArrayIndex *index) {
     return;
   }
 
+  printf("Array Index:\n");
   size_t count = 0;
   for (size_t i = 0; i < ARRAY_INDEX_SIZE; i++) {
     const IndexEntry *entry = &index->entries[i];

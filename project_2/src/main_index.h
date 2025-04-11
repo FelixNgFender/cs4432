@@ -2,9 +2,11 @@
 #define MAIN_INDEX_H
 
 #include "array_index.h"
+#include "hash_index.h"
 
 typedef struct MainIndex {
   ArrayIndex array_index;
+  HashIndex hash_index;
 } MainIndex;
 
 void main_index_init(MainIndex *index);

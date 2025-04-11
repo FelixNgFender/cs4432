@@ -1,10 +1,12 @@
 #include "database.h"
+#include "mem.h"
 #include <stdlib.h>
 
 int main() {
-  Database db;
-  database_init(&db);
-  database_start(&db);
-  database_cleanup(&db);
+  Database *db = check_malloc(sizeof(Database));
+  database_init(db);
+  database_start(db);
+  database_cleanup(db);
+  free(db);
   return EXIT_SUCCESS;
 }
