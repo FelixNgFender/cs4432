@@ -27,9 +27,14 @@ void hash_index_print(const HashIndex *index) {
   size_t count = 0;
   for (size_t i = 0; i < HASH_INDEX_SIZE; i++) {
     const HashNode *node = index->buckets[i];
-    count += node ? node->entry.location_count : 0;
+    printf("Key %zu:\n", i + 1);
+    if (node == NULL) {
+      printf("  No entries\n");
+      continue;
+    }
     while (node) {
-      printf("Key %zu: ", i + 1);
+      count += node->entry.location_count;
+      printf("  Subkey %hu: ", node->key);
       index_entry_print(&node->entry);
       node = node->next;
     }
