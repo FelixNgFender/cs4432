@@ -1,7 +1,7 @@
-#include "main_index.h"
+#include "index_manager.h"
 #include <stdio.h>
 
-void main_index_init(MainIndex *index) {
+void index_manager_init(IndexManager *index) {
   if (index == NULL) {
     return;
   }
@@ -10,18 +10,18 @@ void main_index_init(MainIndex *index) {
   hash_index_init(&index->hash_index);
 }
 
-void main_index_print(const MainIndex *index) {
+void index_manager_print(const IndexManager *index) {
   if (index == NULL) {
     return;
   }
 
-  printf("Main Index:\n");
+  printf("Index Manager:\n");
   array_index_print(&index->array_index);
   hash_index_print(&index->hash_index);
 }
 
-void main_index_build(MainIndex *index, const Record *records,
-                      size_t num_records) {
+void index_manager_build(IndexManager *index, const Record *records,
+                         size_t num_records) {
   if (index == NULL || records == NULL) {
     return;
   }
@@ -31,7 +31,7 @@ void main_index_build(MainIndex *index, const Record *records,
   printf("The hash-based and array-based indexes are built successfully.\n");
 }
 
-void main_index_cleanup(MainIndex *index) {
+void index_manager_cleanup(IndexManager *index) {
   if (index == NULL) {
     return;
   }

@@ -1,4 +1,5 @@
 #include "command_compiler.h"
+#include "util.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -51,6 +52,11 @@ void command_compiler_start(CommandCompiler *cc) {
       return;
     } else {
 
+      struct timespec start_time;
+      struct timespec end_time;
+      struct timespec diff_time;
+      get_time(&start_time);
+
       CommandArgs args = {
           .command_type = COMMAND_UNKNOWN,
           .table_name = DEFAULT_TABLE_NAME,
@@ -60,9 +66,7 @@ void command_compiler_start(CommandCompiler *cc) {
       };
 
       if (input_parse_and_validate_line(line, &args) == -1) {
-        printf("Error: Invalid command.\n");
-        free(line);
-        continue;
+        fprintf(stderr, "Error: Invalid command.\n");
       }
 
       QueryPlan plan = query_plan_create(args.command_type, args.table_name,
@@ -70,6 +74,11 @@ void command_compiler_start(CommandCompiler *cc) {
       if (execution_engine_execute_plan(&cc->execution_engine, plan) == -1) {
         fprintf(stderr, "Error: Failed to execute plan.\n");
       }
+
+      get_time(&end_time);
+      get_time_diff(&start_time, &end_time, &diff_time);
+      long milliseconds = diff_time.tv_sec * 1000 + diff_time.tv_nsec / 1000000;
+      printf("Execution time: %ld ms\n", milliseconds);
     }
     free(line);
   }

@@ -1,5 +1,6 @@
 #include "execution_engine.h"
 #include "database.h"
+#include "hash_index.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -23,7 +24,8 @@ void execution_engine_init(ExecutionEngine *ee) {
     return;
   }
 
-  main_index_init(&ee->main_index);
+  index_manager_init(&ee->index_manager);
+  ee->index_manager_built = false;
 }
 
 void execution_engine_cleanup(ExecutionEngine *ee) {
@@ -31,7 +33,7 @@ void execution_engine_cleanup(ExecutionEngine *ee) {
     return;
   }
 
-  main_index_cleanup(&ee->main_index);
+  index_manager_cleanup(&ee->index_manager);
 }
 
 QueryPlan query_plan_create(Command command_type, const char *table_name,
@@ -87,7 +89,8 @@ int execution_engine_create_index(ExecutionEngine *ee, const char *table_name,
             NUM_RECORDS, dirname);
     return -1;
   }
-  main_index_build(&ee->main_index, records, NUM_RECORDS);
+  index_manager_build(&ee->index_manager, records, NUM_RECORDS);
+  ee->index_manager_built = true;
   return 0;
 }
 
@@ -97,6 +100,21 @@ int execution_engine_execute_equality_query(const ExecutionEngine *ee,
                                             uint16_t v1) {
   printf("Executing equality query on %s where %s = %u using %p\n", table_name,
          index_column, v1, (void *)ee);
+  if (!ee->index_manager_built) {
+    // TODO: full table scan
+    printf("Used table scan.\n");
+    return -1;
+  }
+
+  // use hash-based index
+  const IndexEntry *entry = hash_index_get(&ee->index_manager.hash_index, v1);
+  if (entry == NULL) {
+    fprintf(stderr, "Error: No entry found for value %u in index.\n", v1);
+    return -1;
+  }
+  // prepare large enough in-memory buffer
+  // TODO: communicate with index manager also interface buffers blabla
+  printf("Used hash-based index.\n");
   return -1;
 }
 

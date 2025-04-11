@@ -11,5 +11,8 @@
   } while (0)
 
 long strtol_or_exit(const char *nptr);
+void get_time(struct timespec *tp);
+void get_time_diff(const struct timespec *start, const struct timespec *end,
+                   struct timespec *diff_out);
 
 #endif // UTIL_H

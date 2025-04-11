@@ -3,7 +3,7 @@
 
 #include "command_compiler.h"
 #include "execution_engine.h"
-#include "main_index.h"
+#include "index_manager.h"
 
 #define DISK_DIR "./Project2Dataset"
 #define DATA_FILE_PREFIX 'F'

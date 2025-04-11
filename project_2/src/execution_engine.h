@@ -1,7 +1,8 @@
 #ifndef INSTRUCTIONS_H
 #define INSTRUCTIONS_H
 
-#include "main_index.h"
+#include "index_manager.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef enum {
@@ -21,7 +22,8 @@ typedef struct QueryPlan {
 } QueryPlan;
 
 typedef struct ExecutionEngine {
-  MainIndex main_index;
+  IndexManager index_manager;
+  bool index_manager_built;
 } ExecutionEngine;
 
 void execution_engine_init(ExecutionEngine *ee);
