@@ -3,10 +3,8 @@
 #include "util.h"
 #include <dirent.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 size_t records_parse_from_file(Record *records, const char *filename);

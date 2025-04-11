@@ -1,8 +1,6 @@
 #include "util.h"
 #include <errno.h>
 #include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 long strtol_or_exit(const char *nptr) {
   char *end;

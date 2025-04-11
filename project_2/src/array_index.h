@@ -2,8 +2,6 @@
 #define ARRAY_INDEX_H
 
 #include "record.h"
-#include <stdint.h>
-#include <stdlib.h>
 
 #define ARRAY_INDEX_SIZE MAX_RANDOM
 #define INITIAL_CAPACITY 5

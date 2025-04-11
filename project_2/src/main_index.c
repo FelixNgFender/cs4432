@@ -1,5 +1,4 @@
 #include "main_index.h"
-#include <dirent.h>
 
 void main_index_init(MainIndex *index) {
   if (index == NULL) {

@@ -2,7 +2,6 @@
 #include "main_index.h"
 #include "mem.h"
 #include "util.h"
-#include <stdlib.h>
 
 int main() {
   Record records[NUM_RECORDS] = {0};

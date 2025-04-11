@@ -1,6 +1,5 @@
 #include "mem.h"
 #include "util.h"
-#include <stdlib.h>
 
 void *check_malloc(size_t size) {
   void *p = malloc(size);

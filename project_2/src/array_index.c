@@ -1,11 +1,6 @@
 #include "array_index.h"
 #include "mem.h"
-#include <dirent.h>
-#include <fcntl.h>
 #include <stdio.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 void array_index_entry_init(ArrayIndexEntry *entry);
 void array_index_add(ArrayIndex *index, uint16_t key, RecordLocation value);
