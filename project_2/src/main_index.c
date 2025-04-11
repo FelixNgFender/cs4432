@@ -1,4 +1,5 @@
 #include "main_index.h"
+#include <stdio.h>
 
 void main_index_init(MainIndex *index) {
   if (index == NULL) {
@@ -23,6 +24,7 @@ void main_index_build(MainIndex *index, const Record *records,
   }
 
   array_index_build(&index->array_index, records, num_records);
+  printf("The hash-based and array-based indexes are built successfully.\n");
 }
 
 void main_index_cleanup(MainIndex *index) {

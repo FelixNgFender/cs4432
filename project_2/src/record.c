@@ -1,5 +1,5 @@
 #include "record.h"
-#include "block.h"
+#include "database.h"
 #include "util.h"
 #include <dirent.h>
 #include <fcntl.h>
