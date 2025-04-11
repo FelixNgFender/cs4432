@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #define handle_error(msg)                                                      \
   do {                                                                         \
