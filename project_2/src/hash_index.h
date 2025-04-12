@@ -2,7 +2,7 @@
 #define HASH_INDEX_H
 
 #include "index_entry.h"
-#include "record.h"
+#include "storage_manager.h"
 
 #define HASH_INDEX_SIZE 2048
 

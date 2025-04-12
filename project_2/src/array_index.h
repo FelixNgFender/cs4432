@@ -2,9 +2,9 @@
 #define ARRAY_INDEX_H
 
 #include "index_entry.h"
-#include "record.h"
+#include "storage_manager.h"
 
-#define ARRAY_INDEX_SIZE MAX_RANDOM
+#define ARRAY_INDEX_SIZE 5000
 
 typedef struct ArrayIndex {
   IndexEntry entries[ARRAY_INDEX_SIZE];
