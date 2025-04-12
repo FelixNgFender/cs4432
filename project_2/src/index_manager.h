@@ -6,9 +6,10 @@
 #include "hash_index.h"
 
 typedef struct IndexManager {
-  ArrayIndex array_index;
-  HashIndex hash_index;
   BufferManager buffer_manager;
+  HashIndex hash_index;
+  ArrayIndex array_index;
+  bool index_manager_built;
 } IndexManager;
 
 void index_manager_init(IndexManager *index);

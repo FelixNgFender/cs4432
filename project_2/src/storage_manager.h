@@ -43,7 +43,8 @@ typedef struct Record {
 } Record;
 
 void record_print(const Record *record);
-size_t records_parse_from_dir(const char *dirname, Record *records_out);
+size_t storage_manager_parse_records_from_dir(const char *dirname,
+                                              Record *records_out);
 size_t storage_manager_parse_records_from_buffer(const unsigned char *src,
                                                  size_t num_records,
                                                  Record *record_out);

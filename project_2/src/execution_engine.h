@@ -23,7 +23,6 @@ typedef struct QueryPlan {
 
 typedef struct ExecutionEngine {
   IndexManager index_manager;
-  bool index_manager_built;
 } ExecutionEngine;
 
 void execution_engine_init(ExecutionEngine *ee);

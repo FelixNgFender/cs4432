@@ -9,6 +9,7 @@ void index_manager_init(IndexManager *index) {
     return;
   }
 
+  index->index_manager_built = false;
   array_index_init(&index->array_index);
   hash_index_init(&index->hash_index);
   buffer_manager_init(&index->buffer_manager);
@@ -32,6 +33,7 @@ void index_manager_build(IndexManager *index, const Record *records,
 
   array_index_build(&index->array_index, records, num_records);
   hash_index_build(&index->hash_index, records, num_records);
+  index->index_manager_built = true;
   printf("The hash-based and array-based indexes are built successfully.\n");
 }
 
@@ -51,11 +53,19 @@ size_t index_manager_get_records_with_key_range(IndexManager *index,
       key + range > MAX_RANDOM) {
     return -1;
   }
+
+  if (!index->index_manager_built) {
+    // TODO: implement a table scan
+    printf("Used table scan.\n");
+    return -1;
+  }
+
   const IndexEntry *entry;
   if (range == 1) {
     entry = hash_index_get(&index->hash_index, key);
     printf("Used hash-based index.\n");
   } else {
+    // TODO: adjust, should support range queries
     entry = array_index_get_range(&index->array_index, key, range);
     printf("Used array-based index.\n");
   }

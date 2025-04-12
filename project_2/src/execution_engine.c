@@ -15,7 +15,6 @@ void execution_engine_init(ExecutionEngine *ee) {
     return;
   }
 
-  ee->index_manager_built = false;
   index_manager_init(&ee->index_manager);
 }
 
@@ -70,29 +69,22 @@ int execution_engine_create_index(ExecutionEngine *ee) {
 
   const char *dirname = DISK_DIR;
   Record records[NUM_RECORDS] = {0};
-  if (records_parse_from_dir(dirname, records) != NUM_RECORDS) {
+  if (storage_manager_parse_records_from_dir(dirname, records) != NUM_RECORDS) {
     fprintf(stderr, "Error: Failed to parse %d records from directory %s\n",
             NUM_RECORDS, dirname);
     return -1;
   }
   index_manager_build(&ee->index_manager, records, NUM_RECORDS);
-  ee->index_manager_built = true;
 
   return 0;
 }
 
 int execution_engine_execute_equality_query(ExecutionEngine *ee, uint16_t v1) {
-  if (!ee->index_manager_built) {
-    // TODO: full table scan
-    printf("Used table scan.\n");
-    return -1;
-  }
-
   Record records[1] = {0};
   size_t num_records_queried = index_manager_get_records_with_key_range(
       &ee->index_manager, v1, 1, records);
   if (num_records_queried != 1) {
-    fprintf(stderr, "Error: No entry found for value %u in index.\n", v1);
+    fprintf(stderr, "Error: No entry found for value %u in table.\n", v1);
     return -1;
   }
 

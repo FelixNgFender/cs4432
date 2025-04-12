@@ -50,7 +50,8 @@ void record_print(const Record *record) {
          record->random);
 }
 
-size_t records_parse_from_dir(const char *dirname, Record *records_out) {
+size_t storage_manager_parse_records_from_dir(const char *dirname,
+                                              Record *records_out) {
   if (dirname == NULL) {
     return -1;
   }

@@ -27,7 +27,6 @@ typedef struct BufferManager {
 } BufferManager;
 
 void buffer_manager_init(BufferManager *bm);
-
 int buffer_manager_get_record(BufferManager *bm, const RecordLocation loc,
                               Record *record_out);
 
