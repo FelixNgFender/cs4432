@@ -218,4 +218,7 @@ Find correct leaf: N1, N3, N7
 
 ![tree6](./tree6.png)
 
-Remove 23 from N7. Since N7 has at least 1 key left, we are done.
+Remove 23 from N7. Since N7 has less than 2 entries, try to borrow from sibling
+N6 new. Fails because N6 new has only 2 entries. Merge N7 and N6 new.
+
+Since merge occurred, must delete entry (pointing to N7) from parent of N7 (N3).
