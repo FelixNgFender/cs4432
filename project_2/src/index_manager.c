@@ -1,6 +1,20 @@
 #include "index_manager.h"
 #include <stdio.h>
 
+static int compare_record_locations(const void *a, const void *b) {
+  const RecordLocation *ra = (const RecordLocation *)a;
+  const RecordLocation *rb = (const RecordLocation *)b;
+
+  if (ra->block_id != rb->block_id) {
+    return (int)ra->block_id - (int)rb->block_id;
+  }
+  return (int)ra->record_id - (int)rb->record_id;
+}
+
+static void sort_record_locations(RecordLocation *locs, size_t count) {
+  qsort(locs, count, sizeof(RecordLocation), compare_record_locations);
+}
+
 void index_manager_init(IndexManager *index) {
   if (index == NULL) {
     return;
@@ -58,5 +72,7 @@ index_manager_get_record_locations_within_range(const IndexManager *index,
     num_locations =
         array_index_get_locations(&index->array_index, lower, upper, locs_out);
   }
+  // PERF: sort before passed to record manager to reduce page swaps
+  sort_record_locations(locs_out, num_locations);
   return num_locations;
 }

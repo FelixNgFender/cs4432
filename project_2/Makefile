@@ -9,7 +9,7 @@ RELEASE_LFLAGS=
 VALGRIND_CFLAGS=-g -Wall -Wextra -Werror -pedantic -O2 # valgrind does not work together with asan
 VALGRIND_LFLAGS=
 TARGET_FLAGS=
-REPORT_FLAG=
+REPORT_FLAG=--keep
 
 # directories
 TARGET=main
@@ -86,4 +86,4 @@ valgrind: build
 .PHONY: submit
 submit:
 	$(RM) $(SUBMITNAME)
-	zip $(SUBMITNAME) $(SRC) $(HEADERS) $(TEST_DIR)/* Makefile README.*
+	zip $(SUBMITNAME) $(SRC) $(HEADERS) $(TEST_DIR)/* Makefile README.* ./$(REPORT_SCRIPT)

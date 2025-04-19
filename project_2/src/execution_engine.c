@@ -45,7 +45,7 @@ static int execution_engine_execute_equality_query(ExecutionEngine *ee,
     num_records_found =
         record_manager_fetch_records(&ee->record_manager, locs, num_locs,
                                      &num_blocks_swapped_in, records_to_report);
-    query_type = "Array-based index";
+    query_type = "Hash-based index";
   } else {
     Record records[NUM_RECORDS];
     if (record_manager_scan_records(&ee->record_manager, records,
@@ -99,7 +99,7 @@ static int execution_engine_execute_range_query(ExecutionEngine *ee,
     num_records_found =
         record_manager_fetch_records(&ee->record_manager, locs, num_locs,
                                      &num_blocks_swapped_in, records_to_report);
-    query_type = "Hash-based index";
+    query_type = "Array-based index";
   } else {
     Record records[NUM_RECORDS];
     if (record_manager_scan_records(&ee->record_manager, records,
