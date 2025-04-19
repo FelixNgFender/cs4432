@@ -1,14 +1,6 @@
-#include "config.h"
-#include <stdbool.h>
-#include <stdint.h>
+#include "buffer_manager.h"
+#include "storage_manager.h"
 #include <stdio.h>
-
-typedef struct BufferManager {
-  uint8_t num_blocks;
-  // index of the last evicted block
-  uint8_t last_evicted_idx;
-  Block blocks[DEFAULT_BUFFER_POOL_SIZE];
-} BufferManager;
 
 /**
  * Get the block index containing the specified `block_id` in the buffer pool.
@@ -82,8 +74,6 @@ static int8_t buffer_manager_evict_block(BufferManager *bm) {
       storage_manager_write_block(block_id, block->content);
     }
 
-    printf("Evicted file %d from block %d\n", block_id, idx + 1);
-
     // Reset block metadata
     block->id = -1;
     block->dirty = false;
@@ -135,7 +125,9 @@ void buffer_manager_init(BufferManager *bm) {
   // Last page so we can start from the beginning when we start
   bm->last_evicted_idx = DEFAULT_BUFFER_POOL_SIZE - 1;
   bm->num_blocks = DEFAULT_BUFFER_POOL_SIZE;
-  memset(bm->blocks, DEFAULT_BUFFER_POOL_SIZE, sizeof(bm->blocks));
+  for (uint8_t i = 0; i < bm->num_blocks; i++) {
+    block_init(&bm->blocks[i]);
+  }
 }
 
 /**
@@ -158,13 +150,7 @@ const Block *buffer_manager_get_block(BufferManager *bm, uint8_t block_id) {
               block_id);
       return NULL;
     }
-    printf("Brought File %d from disk; Placed in block %d\n", block_id,
-           block_idx + 1);
-  } else {
-    printf("File %d already in memory; Located in block %d\n", block_id,
-           block_idx + 1);
   }
-
   return &bm->blocks[block_idx];
 }
 

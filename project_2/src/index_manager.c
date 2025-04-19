@@ -1,13 +1,5 @@
-#include <stdbool.h>
-#include <stdint.h>
+#include "index_manager.h"
 #include <stdio.h>
-#include <stdlib.h>
-
-typedef struct IndexManager {
-  HashIndex hash_index;
-  ArrayIndex array_index;
-  bool is_built;
-} IndexManager;
 
 void index_manager_init(IndexManager *index) {
   if (index == NULL) {

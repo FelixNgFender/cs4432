@@ -1,15 +1,9 @@
+#include "util.h"
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
-
-#define handle_error(msg)                                                      \
-  do {                                                                         \
-    perror(msg);                                                               \
-    exit(EXIT_FAILURE);                                                        \
-  } while (0)
 
 void *check_malloc(size_t size) {
   void *p = malloc(size);

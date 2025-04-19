@@ -1,17 +1,9 @@
-#include "config.h"
+#include "array_index.h"
+#include "util.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// each entry in the index holds a linked list of locations
-typedef struct ArrayIndexEntry {
-  LocationNode *head;
-} ArrayIndexEntry;
-
-typedef struct ArrayIndex {
-  ArrayIndexEntry entries[ARRAY_INDEX_SIZE];
-} ArrayIndex;
 
 void array_index_init(ArrayIndex *index) {
   if (index == NULL) {

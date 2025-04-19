@@ -1,20 +1,7 @@
-#include "config.h"
-#include <stddef.h>
-#include <stdint.h>
+#include "hash_index.h"
+#include "util.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-
-// entry for a hash bucket (key + list of locations)
-typedef struct HashIndexEntry {
-  uint16_t key;
-  LocationNode *locations;
-  struct HashIndexEntry *next;
-} HashIndexEntry;
-
-typedef struct HashIndex {
-  HashIndexEntry *buckets[HASH_INDEX_SIZE];
-} HashIndex;
 
 static inline size_t hash_key(uint16_t key) { return key % HASH_INDEX_SIZE; }
 

@@ -1,20 +1,7 @@
-#include "config.h"
-#include <stdint.h>
+#include "command_compiler.h"
+#include "util.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-
-typedef struct CommandCompiler {
-  ExecutionEngine execution_engine;
-} CommandCompiler;
-
-typedef struct CommandArgs {
-  Command command_type;
-  const char *table_name;
-  const char *index_column;
-  uint16_t v1;
-  uint16_t v2;
-} CommandArgs;
 
 static Command query_to_command(const char *s) {
   if (s == NULL) {

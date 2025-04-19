@@ -1,24 +1,24 @@
-#include "config.h"
-#include <stdint.h>
+#include "record.h"
 #include <stdio.h>
 
-typedef struct RecordLocation {
-  uint8_t block_id;
-  uint8_t record_id;
-} RecordLocation;
+void record_print(const Record *record) {
+  if (record == NULL) {
+    return;
+  }
 
-// node to store one record location
-typedef struct LocationNode {
-  RecordLocation location;
-  struct LocationNode *next;
-} LocationNode;
+  printf("F%02hhu-Rec%03hhu, Name%03hhu, address%03hhu, %04hu...\n",
+         record->location.block_id, record->location.record_id, record->name,
+         record->address, record->random);
+}
 
-typedef struct Record {
-  RecordLocation location;
-  uint16_t random;
-  uint8_t name;
-  uint8_t address;
-} Record;
+void record_location_print(const RecordLocation *location) {
+  if (location == NULL) {
+    return;
+  }
+
+  printf("Block ID: %02hhu, Record ID: %03hhu\n", location->block_id,
+         location->record_id);
+}
 
 int record_parse_from_buffer(const unsigned char *src, Record *record_out) {
   if (record_out == NULL || src == NULL) {
@@ -48,21 +48,34 @@ int record_parse_from_buffer(const unsigned char *src, Record *record_out) {
   return 0;
 }
 
-void record_print(const Record *record) {
-  if (record == NULL) {
-    return;
+int record_parse_from_block(const Block *block, uint8_t record_id,
+                            Record *record_out) {
+  if (block == NULL || record_id == 0 || record_id > NUM_RECORDS_PER_BLOCK) {
+    return -1;
   }
 
-  printf("F%02hhu-Rec%03hhu, Name%03hhu, address%03hhu, %04hu...\n",
-         record->location.block_id, record->location.record_id, record->name,
-         record->address, record->random);
+  return record_parse_from_buffer(block->content + RECORD_OFFSET(record_id),
+                                  record_out);
 }
 
-void record_location_print(const RecordLocation *location) {
-  if (location == NULL) {
-    return;
+int record_save_to_block(Block *block, uint8_t record_id,
+                         const Record *new_record) {
+  if (block == NULL || record_id == 0 || record_id >= NUM_RECORDS_PER_BLOCK) {
+    return -1;
   }
 
-  printf("Block ID: %02hhu, Record ID: %03hhu\n", location->block_id,
-         location->record_id);
+  char buffer[RECORD_SIZE + 1];
+  int written =
+      snprintf(buffer, sizeof(buffer),
+               "F%2hhu-Rec%3hhu, Name%3hhu, address%3hhu, %4hu...",
+               new_record->location.block_id, new_record->location.record_id,
+               new_record->name, new_record->address, new_record->random);
+
+  if (written <= 0 || written >= RECORD_SIZE + 1) {
+    return -1;
+  }
+
+  block_set_content(block, RECORD_OFFSET(record_id), (unsigned char *)buffer,
+                    RECORD_SIZE);
+  return 0;
 }

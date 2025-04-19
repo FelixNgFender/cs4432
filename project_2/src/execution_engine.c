@@ -1,27 +1,5 @@
-#include "config.h"
-#include <stdint.h>
+#include "execution_engine.h"
 #include <stdio.h>
-
-typedef enum Command {
-  COMMAND_UNKNOWN,
-  COMMAND_CREATE_INDEX,
-  COMMAND_EQUALITY_QUERY,
-  COMMAND_RANGE_QUERY,
-  COMMAND_INEQUALITY_QUERY
-} Command;
-
-typedef struct QueryPlan {
-  const Command command_type;
-  const char *table_name;
-  const char *index_column;
-  const uint16_t v1;
-  const uint16_t v2;
-} QueryPlan;
-
-typedef struct ExecutionEngine {
-  IndexManager index_manager;
-  RecordManager record_manager;
-} ExecutionEngine;
 
 static int execution_engine_create_index(ExecutionEngine *ee) {
   if (ee == NULL) {
@@ -72,6 +50,7 @@ static int execution_engine_execute_equality_query(ExecutionEngine *ee,
       fprintf(stderr, "Error: Failed to table scan while executing query\n");
       return -1;
     }
+
     num_records_found = 0;
     for (size_t i = 0; i < NUM_RECORDS; i++) {
       if (records[i].random == v1) {
@@ -121,6 +100,7 @@ static int execution_engine_execute_range_query(ExecutionEngine *ee,
       fprintf(stderr, "Error: Failed to table scan while executing query\n");
       return -1;
     }
+
     num_records_found = 0;
     for (size_t i = 0; i < NUM_RECORDS; i++) {
       if (records[i].random > v1 && records[i].random < v2) {
@@ -148,13 +128,14 @@ static int execution_engine_execute_inequality_query(ExecutionEngine *ee,
   if (ee == NULL) {
     return -1;
   }
-  // records_fetch_all then filter
+
   Record records[NUM_RECORDS];
   if (record_manager_scan_records(&ee->record_manager, records) !=
       NUM_RECORDS) {
     fprintf(stderr, "Error: Failed to table scan while executing query\n");
     return -1;
   }
+
   Record records_to_report[RECORD_REPORT_SIZE];
   size_t num_records_found = 0;
   for (size_t i = 0; i < NUM_RECORDS; i++) {

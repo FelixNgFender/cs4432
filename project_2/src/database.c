@@ -1,8 +1,4 @@
-#include <stdlib.h>
-
-typedef struct Database {
-  CommandCompiler command_compiler;
-} Database;
+#include "database.h"
 
 void database_init(Database *db) {
   if (db == NULL) {

@@ -1,18 +1,5 @@
-#include "config.h"
-#include <stdbool.h>
-#include <stdint.h>
+#include "block.h"
 #include <string.h>
-
-/**
- * Contains data for one disk block.
- */
-typedef struct Block {
-  unsigned char content[BLOCK_SIZE];
-  // 1-indexed. -1 indicates a free block.
-  int8_t id;
-  bool dirty;
-  bool pinned;
-} Block;
 
 void block_init(Block *block) {
   if (block == NULL) {
