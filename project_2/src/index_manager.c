@@ -2,16 +2,24 @@
 #include <stdio.h>
 
 static int compare_record_locations(const void *a, const void *b) {
+  if (a == NULL || b == NULL) {
+    return 0;
+  }
+
   const RecordLocation *ra = (const RecordLocation *)a;
   const RecordLocation *rb = (const RecordLocation *)b;
-
   if (ra->block_id != rb->block_id) {
     return (int)ra->block_id - (int)rb->block_id;
   }
+
   return (int)ra->record_id - (int)rb->record_id;
 }
 
 static void sort_record_locations(RecordLocation *locs, size_t count) {
+  if (locs == NULL || count == 0) {
+    return;
+  }
+
   qsort(locs, count, sizeof(RecordLocation), compare_record_locations);
 }
 
