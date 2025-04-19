@@ -9,6 +9,7 @@ RELEASE_LFLAGS=
 VALGRIND_CFLAGS=-g -Wall -Wextra -Werror -pedantic -O2 # valgrind does not work together with asan
 VALGRIND_LFLAGS=
 TARGET_FLAGS=
+REPORT_FLAG=
 
 # directories
 TARGET=main
@@ -21,6 +22,8 @@ OBJ_DIR=obj
 SRC=$(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/*/*.c)
 HEADERS=$(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h)
 OBJ=$(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+REPORT_SCRIPT=run_test_report.sh
+REPORT_DIR=out
 
 # misc
 SUBMITNAME=project_2.zip
@@ -60,13 +63,19 @@ run: build
 test: build
 	$(BIN_DIR)/$(TARGET) $(TARGET_FLAGS) < $(TEST_DIR)/in.txt
 
+.PHONY: report
+report: build
+	@mkdir -p $(REPORT_DIR)
+	@rm -f $(REPORT_DIR)/*
+	./$(REPORT_SCRIPT) $(REPORT_FLAG)
+
 .PHONY: debug
 debug: build
 	$(DEBUGGER) $(BIN_DIR)/$(TARGET) $(TARGET_FLAGS)
 
 .PHONY: clean
 clean:
-	$(RM) $(OBJ) $(BIN_DIR)/$(TARGET) $(TEST_COPY_DIR)/*
+	$(RM) $(OBJ) $(BIN_DIR)/$(TARGET) $(TEST_COPY_DIR)/* $(REPORT_DIR)/*
 
 .PHONY: valgrind
 valgrind: CFLAGS=$(VALGRIND_CFLAGS)
