@@ -18,7 +18,8 @@ TEST_DIR=Project2Dataset
 TEST_DATA=$(wildcard $(TEST_DIR)/F*.txt)
 TEST_COPY_DIR=$(BIN_DIR)/$(TEST_DIR)
 OBJ_DIR=obj
-SRC=$(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/*/*.c)
+# SRC=$(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/*/*.c)
+SRC=$(SRC_DIR)/main.c
 HEADERS=$(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h)
 OBJ=$(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 

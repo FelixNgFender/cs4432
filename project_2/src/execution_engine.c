@@ -1,14 +1,179 @@
-#include "execution_engine.h"
-#include "index_manager.h"
+#include "config.h"
+#include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 
-int execution_engine_create_index(ExecutionEngine *ee);
-int execution_engine_execute_equality_query(ExecutionEngine *ee, uint16_t v1);
-int execution_engine_execute_range_query(const ExecutionEngine *ee, uint16_t v1,
-                                         uint16_t v2);
-int execution_engine_execute_inequality_query(const ExecutionEngine *ee,
-                                              uint16_t v1);
+typedef enum Command {
+  COMMAND_UNKNOWN,
+  COMMAND_CREATE_INDEX,
+  COMMAND_EQUALITY_QUERY,
+  COMMAND_RANGE_QUERY,
+  COMMAND_INEQUALITY_QUERY
+} Command;
+
+typedef struct QueryPlan {
+  const Command command_type;
+  const char *table_name;
+  const char *index_column;
+  const uint16_t v1;
+  const uint16_t v2;
+} QueryPlan;
+
+typedef struct ExecutionEngine {
+  IndexManager index_manager;
+  RecordManager record_manager;
+} ExecutionEngine;
+
+static int execution_engine_create_index(ExecutionEngine *ee) {
+  if (ee == NULL) {
+    return -1;
+  }
+
+  if (ee->index_manager.is_built) {
+    fprintf(stderr, "Error: Index already built.\n");
+    return -1;
+  }
+
+  Record records[NUM_RECORDS];
+  if (record_manager_scan_records(&ee->record_manager, records) !=
+      NUM_RECORDS) {
+    fprintf(stderr, "Error: Failed to fetch %d records while building index\n",
+            NUM_RECORDS);
+    return -1;
+  }
+  index_manager_build(&ee->index_manager, records, NUM_RECORDS);
+
+  return 0;
+}
+
+static int execution_engine_execute_equality_query(ExecutionEngine *ee,
+                                                   uint16_t v1) {
+  if (ee == NULL) {
+    return -1;
+  }
+
+  Record records_to_report[RECORD_REPORT_SIZE];
+  size_t num_records_found;
+  if (ee->index_manager.is_built) {
+    RecordLocation locs[RECORD_REPORT_SIZE];
+    size_t num_locs = index_manager_get_record_locations_within_range(
+        &ee->index_manager, v1, v1 + 1, locs);
+    if (num_locs > RECORD_REPORT_SIZE) {
+      printf(
+          "Warning: More than %d (%zu) records found, only showing first %d\n",
+          RECORD_REPORT_SIZE, num_locs, RECORD_REPORT_SIZE);
+      num_locs = RECORD_REPORT_SIZE;
+    }
+    num_records_found = record_manager_fetch_records(
+        &ee->record_manager, locs, num_locs, records_to_report);
+  } else {
+    Record records[NUM_RECORDS];
+    if (record_manager_scan_records(&ee->record_manager, records) !=
+        NUM_RECORDS) {
+      fprintf(stderr, "Error: Failed to table scan while executing query\n");
+      return -1;
+    }
+    num_records_found = 0;
+    for (size_t i = 0; i < NUM_RECORDS; i++) {
+      if (records[i].random == v1) {
+        records_to_report[num_records_found++] = records[i];
+        if (num_records_found >= RECORD_REPORT_SIZE) {
+          printf(
+              "Warning: More than %d (%zu) records found, only showing first "
+              "%d\n",
+              RECORD_REPORT_SIZE, num_records_found, RECORD_REPORT_SIZE);
+          break;
+        }
+      }
+    }
+  }
+
+  printf("Found %zu records with key %u:\n", num_records_found, v1);
+  for (size_t i = 0; i < num_records_found; i++) {
+    record_print(&records_to_report[i]);
+  }
+  return 0;
+}
+
+static int execution_engine_execute_range_query(ExecutionEngine *ee,
+                                                uint16_t v1, uint16_t v2) {
+  if (ee == NULL) {
+    return -1;
+  }
+
+  Record records_to_report[RECORD_REPORT_SIZE];
+  size_t num_records_found;
+  if (ee->index_manager.is_built) {
+    RecordLocation locs[RECORD_REPORT_SIZE];
+    size_t num_locs = index_manager_get_record_locations_within_range(
+        &ee->index_manager, v1 + 1, v2, locs);
+    if (num_locs > RECORD_REPORT_SIZE) {
+      printf(
+          "Warning: More than %d (%zu) records found, only showing first %d\n",
+          RECORD_REPORT_SIZE, num_locs, RECORD_REPORT_SIZE);
+      num_locs = RECORD_REPORT_SIZE;
+    }
+    num_records_found = record_manager_fetch_records(
+        &ee->record_manager, locs, num_locs, records_to_report);
+  } else {
+    Record records[NUM_RECORDS];
+    if (record_manager_scan_records(&ee->record_manager, records) !=
+        NUM_RECORDS) {
+      fprintf(stderr, "Error: Failed to table scan while executing query\n");
+      return -1;
+    }
+    num_records_found = 0;
+    for (size_t i = 0; i < NUM_RECORDS; i++) {
+      if (records[i].random > v1 && records[i].random < v2) {
+        records_to_report[num_records_found++] = records[i];
+        if (num_records_found >= RECORD_REPORT_SIZE) {
+          printf(
+              "Warning: More than %d (%zu) records found, only showing first "
+              "%d\n",
+              RECORD_REPORT_SIZE, num_records_found, RECORD_REPORT_SIZE);
+          break;
+        }
+      }
+    }
+  }
+
+  printf("Found %zu records in range (%u, %u):\n", num_records_found, v1, v2);
+  for (size_t i = 0; i < num_records_found; i++) {
+    record_print(&records_to_report[i]);
+  }
+  return 0;
+}
+
+static int execution_engine_execute_inequality_query(ExecutionEngine *ee,
+                                                     uint16_t v1) {
+  if (ee == NULL) {
+    return -1;
+  }
+  // records_fetch_all then filter
+  Record records[NUM_RECORDS];
+  if (record_manager_scan_records(&ee->record_manager, records) !=
+      NUM_RECORDS) {
+    fprintf(stderr, "Error: Failed to table scan while executing query\n");
+    return -1;
+  }
+  Record records_to_report[RECORD_REPORT_SIZE];
+  size_t num_records_found = 0;
+  for (size_t i = 0; i < NUM_RECORDS; i++) {
+    if (records[i].random != v1) {
+      records_to_report[num_records_found++] = records[i];
+      if (num_records_found >= RECORD_REPORT_SIZE) {
+        printf("Warning: More than %d (%zu) records found, only showing first "
+               "%d\n",
+               RECORD_REPORT_SIZE, num_records_found, RECORD_REPORT_SIZE);
+        break;
+      }
+    }
+  }
+  printf("Found %zu records with key != %u:\n", num_records_found, v1);
+  for (size_t i = 0; i < num_records_found; i++) {
+    record_print(&records_to_report[i]);
+  }
+  return 0;
+}
 
 void execution_engine_init(ExecutionEngine *ee) {
   if (ee == NULL) {
@@ -16,6 +181,7 @@ void execution_engine_init(ExecutionEngine *ee) {
   }
 
   index_manager_init(&ee->index_manager);
+  record_manager_init(&ee->record_manager);
 }
 
 void execution_engine_cleanup(ExecutionEngine *ee) {
@@ -26,25 +192,11 @@ void execution_engine_cleanup(ExecutionEngine *ee) {
   index_manager_cleanup(&ee->index_manager);
 }
 
-QueryPlan query_plan_create(Command command_type, const char *table_name,
-                            const char *index_column, uint16_t v1,
-                            uint16_t v2) {
-  if (command_type == COMMAND_UNKNOWN) {
-    fprintf(stderr, "Error: Invalid command type.\n");
-    return (QueryPlan){.command_type = COMMAND_UNKNOWN};
+int execution_engine_execute_plan(ExecutionEngine *ee, QueryPlan plan) {
+  if (ee == NULL) {
+    return -1;
   }
 
-  QueryPlan plan = {
-      .command_type = command_type,
-      .table_name = table_name,
-      .index_column = index_column,
-      .v1 = v1,
-      .v2 = v2,
-  };
-  return plan;
-}
-
-int execution_engine_execute_plan(ExecutionEngine *ee, QueryPlan plan) {
   Command command_type = plan.command_type;
   switch (command_type) {
   case COMMAND_CREATE_INDEX:
@@ -56,71 +208,7 @@ int execution_engine_execute_plan(ExecutionEngine *ee, QueryPlan plan) {
   case COMMAND_INEQUALITY_QUERY:
     return execution_engine_execute_inequality_query(ee, plan.v1);
   default:
-    handle_invalid_command();
+    fprintf(stderr, "Error: Unknown command type.\n");
     return -1;
   }
-}
-
-int execution_engine_create_index(ExecutionEngine *ee) {
-  if (ee == NULL) {
-    fprintf(stderr, "Error: Invalid arguments to create index.\n");
-    return -1;
-  }
-
-  const char *dirname = DISK_DIR;
-  Record records[NUM_RECORDS] = {0};
-  if (storage_manager_parse_records_from_dir(dirname, records) != NUM_RECORDS) {
-    fprintf(stderr, "Error: Failed to parse %d records from directory %s\n",
-            NUM_RECORDS, dirname);
-    return -1;
-  }
-  index_manager_build(&ee->index_manager, records, NUM_RECORDS);
-
-  return 0;
-}
-
-int execution_engine_execute_equality_query(ExecutionEngine *ee, uint16_t v1) {
-  Record records[1] = {0};
-  size_t num_records_queried = index_manager_get_records_with_key_range(
-      &ee->index_manager, v1, 1, records);
-  if (num_records_queried != 1) {
-    fprintf(stderr, "Error: No entry found for value %u in table.\n", v1);
-    return -1;
-  }
-
-  printf("Found %zu records with key %u:\n", num_records_queried, v1);
-  record_print(&records[0]);
-  return 0;
-}
-
-int execution_engine_execute_range_query(const ExecutionEngine *ee, uint16_t v1,
-                                         uint16_t v2) {
-  return -1;
-}
-
-int execution_engine_execute_inequality_query(const ExecutionEngine *ee,
-                                              uint16_t v1) {
-  return -1;
-}
-
-void handle_invalid_command() {
-  fprintf(stderr, "Error: Invalid command. Valid instructions are "
-                  "CREATE INDEX and SELECT.\n");
-}
-
-Command str_to_command(const char *s) {
-  if (strncmp(s, "CREATE INDEX ON", strlen("CREATE INDEX ON")) == 0) {
-    return COMMAND_CREATE_INDEX;
-  } else if (strncmp(s, "SELECT * FROM", strlen("SELECT * FROM")) == 0) {
-    if (strstr(s, "WHERE") != NULL) {
-      if (strstr(s, "!=") != NULL) {
-        return COMMAND_INEQUALITY_QUERY;
-      } else if (strstr(s, "=") != NULL) {
-        return COMMAND_EQUALITY_QUERY;
-      } else if (strstr(s, ">") != NULL && strstr(s, "<") != NULL) {
-        return COMMAND_RANGE_QUERY;
-      }
-    }
-  }
-  return COMMAND_UNKNOWN;
 }
