@@ -9,7 +9,7 @@ RELEASE_LFLAGS=
 VALGRIND_CFLAGS=-g -Wall -Wextra -Werror -pedantic -O2 # valgrind does not work together with asan
 VALGRIND_LFLAGS=
 TARGET_FLAGS=
-REPORT_FLAG=--keep
+REPORT_FLAG=
 
 # directories
 TARGET=main
