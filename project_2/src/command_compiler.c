@@ -182,7 +182,7 @@ void command_compiler_start(CommandCompiler *cc) {
       get_time(&end_time);
       get_time_diff(&start_time, &end_time, &diff_time);
       long milliseconds = diff_time.tv_sec * 1000 + diff_time.tv_nsec / 1000000;
-      printf("Execution time: %ld ms\n", milliseconds);
+      printf("Time taken to answer the query: %ld ms\n", milliseconds);
     }
     free(line);
   }

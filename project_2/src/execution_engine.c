@@ -29,6 +29,7 @@ static int execution_engine_execute_equality_query(ExecutionEngine *ee,
     return -1;
   }
 
+  const char *query_type = NULL;
   Record records_to_report[RECORD_REPORT_SIZE];
   size_t num_records_found;
   if (ee->index_manager.is_built) {
@@ -43,6 +44,7 @@ static int execution_engine_execute_equality_query(ExecutionEngine *ee,
     }
     num_records_found = record_manager_fetch_records(
         &ee->record_manager, locs, num_locs, records_to_report);
+    query_type = "Array-based index";
   } else {
     Record records[NUM_RECORDS];
     if (record_manager_scan_records(&ee->record_manager, records) !=
@@ -64,12 +66,13 @@ static int execution_engine_execute_equality_query(ExecutionEngine *ee,
         }
       }
     }
+    query_type = "Table Scan";
   }
 
-  printf("Found %zu records with key %u:\n", num_records_found, v1);
   for (size_t i = 0; i < num_records_found; i++) {
     record_print(&records_to_report[i]);
   }
+  printf("Index type used: %s\n", query_type);
   return 0;
 }
 
@@ -79,6 +82,7 @@ static int execution_engine_execute_range_query(ExecutionEngine *ee,
     return -1;
   }
 
+  const char *query_type = NULL;
   Record records_to_report[RECORD_REPORT_SIZE];
   size_t num_records_found;
   if (ee->index_manager.is_built) {
@@ -93,6 +97,7 @@ static int execution_engine_execute_range_query(ExecutionEngine *ee,
     }
     num_records_found = record_manager_fetch_records(
         &ee->record_manager, locs, num_locs, records_to_report);
+    query_type = "Hash-based index";
   } else {
     Record records[NUM_RECORDS];
     if (record_manager_scan_records(&ee->record_manager, records) !=
@@ -114,12 +119,13 @@ static int execution_engine_execute_range_query(ExecutionEngine *ee,
         }
       }
     }
+    query_type = "Table Scan";
   }
 
-  printf("Found %zu records in range (%u, %u):\n", num_records_found, v1, v2);
   for (size_t i = 0; i < num_records_found; i++) {
     record_print(&records_to_report[i]);
   }
+  printf("Index type used: %s\n", query_type);
   return 0;
 }
 
@@ -129,6 +135,7 @@ static int execution_engine_execute_inequality_query(ExecutionEngine *ee,
     return -1;
   }
 
+  const char *query_type = "Table Scan";
   Record records[NUM_RECORDS];
   if (record_manager_scan_records(&ee->record_manager, records) !=
       NUM_RECORDS) {
@@ -149,10 +156,10 @@ static int execution_engine_execute_inequality_query(ExecutionEngine *ee,
       }
     }
   }
-  printf("Found %zu records with key != %u:\n", num_records_found, v1);
   for (size_t i = 0; i < num_records_found; i++) {
     record_print(&records_to_report[i]);
   }
+  printf("Index type used: %s\n", query_type);
   return 0;
 }
 

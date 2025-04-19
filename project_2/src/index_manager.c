@@ -54,11 +54,9 @@ index_manager_get_record_locations_within_range(const IndexManager *index,
   if (lower + 1 == upper) {
     num_locations =
         hash_index_get_locations(&index->hash_index, lower, locs_out);
-    printf("Used hash-based index.\n");
   } else {
     num_locations =
         array_index_get_locations(&index->array_index, lower, upper, locs_out);
-    printf("Used array-based index.\n");
   }
   return num_locations;
 }

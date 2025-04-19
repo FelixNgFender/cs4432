@@ -171,15 +171,12 @@ int buffer_manager_pin_block(BufferManager *bm, uint8_t block_id) {
     }
   }
 
-  printf("File %d pinned in block %d; ", block_id, block_idx + 1);
   Block *block = &bm->blocks[block_idx];
   if (block->pinned) {
-    printf("Already pinned\n");
     return 0;
   }
 
   block->pinned = true;
-  printf("Not already pinned\n");
   return 0;
 }
 
@@ -197,14 +194,11 @@ int buffer_manager_unpin_block(BufferManager *bm, uint8_t block_id) {
     return -1;
   }
 
-  printf("File %d is unpinned in block %d; ", block_id, block_idx + 1);
   Block *block = &bm->blocks[block_idx];
   if (!block->pinned) {
-    printf("Block was already unpinned\n");
     return 0;
   }
 
   block->pinned = false;
-  printf("Block %d was not already unpinned\n", block_idx + 1);
   return 0;
 }
