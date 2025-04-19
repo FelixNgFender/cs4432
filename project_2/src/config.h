@@ -8,6 +8,9 @@
 #define NUM_RECORDS_PER_BLOCK 100
 #define NUM_RECORDS (NUM_RECORDS_PER_BLOCK * NUM_BLOCKS)
 
+#define RECORD_SIZE 40
+#define RECORD_OFFSET(record_id) ((record_id - 1) * RECORD_SIZE)
+
 #define MIN_BLOCK_ID 1
 #define MAX_BLOCK_ID 99
 #define MIN_RECORD_ID 1
@@ -19,16 +22,13 @@
 #define MIN_RANDOM 1
 #define MAX_RANDOM 5000
 
-#define RECORD_SIZE 40
-#define RECORD_OFFSET(record_id) ((record_id - 1) * RECORD_SIZE)
-
 #define DEFAULT_INDEX_COLUMN "RandomV"
 #define DEFAULT_TABLE_NAME "Project2Dataset"
 
 #define HASH_INDEX_SIZE 2500
 #define ARRAY_INDEX_SIZE 5000
 
-#define RECORD_REPORT_SIZE 100
+#define RECORD_REPORT_SIZE NUM_RECORDS
 
 #define BLOCK_ID(record_number) (record_number / NUM_RECORDS_PER_BLOCK + 1)
 #define RECORD_ID(record_number) (record_number % NUM_RECORDS_PER_BLOCK)

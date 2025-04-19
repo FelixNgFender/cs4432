@@ -164,25 +164,22 @@ void command_compiler_start(CommandCompiler *cc) {
           .v2 = 0,
       };
 
-      if (input_parse_and_validate_line(line, &args) == -1) {
-        fprintf(stderr, "Error: Invalid command.\n");
+      if (input_parse_and_validate_line(line, &args) != -1) {
+        QueryPlan plan = {
+            .command_type = args.command_type,
+            .table_name = args.table_name,
+            .index_column = args.index_column,
+            .v1 = args.v1,
+            .v2 = args.v2,
+        };
+        if (execution_engine_execute_plan(&cc->execution_engine, plan) != -1) {
+          get_time(&end_time);
+          get_time_diff(&start_time, &end_time, &diff_time);
+          long milliseconds =
+              diff_time.tv_sec * 1000 + diff_time.tv_nsec / 1000000;
+          printf("Time taken to answer the query: %ld ms\n", milliseconds);
+        }
       }
-
-      QueryPlan plan = {
-          .command_type = args.command_type,
-          .table_name = args.table_name,
-          .index_column = args.index_column,
-          .v1 = args.v1,
-          .v2 = args.v2,
-      };
-      if (execution_engine_execute_plan(&cc->execution_engine, plan) == -1) {
-        fprintf(stderr, "Error: Failed to execute plan.\n");
-      }
-
-      get_time(&end_time);
-      get_time_diff(&start_time, &end_time, &diff_time);
-      long milliseconds = diff_time.tv_sec * 1000 + diff_time.tv_nsec / 1000000;
-      printf("Time taken to answer the query: %ld ms\n", milliseconds);
     }
     free(line);
   }

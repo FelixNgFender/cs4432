@@ -1,7 +1,7 @@
-SELECT * FROM Project2Dataset WHERE RandomV = 0001
-SELECT * FROM Project2Dataset WHERE RandomV > 0001 AND RandomV < 0002
+SELECT * FROM Project2Dataset WHERE RandomV = 1234
+SELECT * FROM Project2Dataset WHERE RandomV > 2500 AND RandomV < 2700
 SELECT * FROM Project2Dataset WHERE RandomV != 0001
 CREATE INDEX ON Project2Dataset (RandomV)
-SELECT * FROM Project2Dataset WHERE RandomV = 0001
-SELECT * FROM Project2Dataset WHERE RandomV > 0001 AND RandomV < 0002
+SELECT * FROM Project2Dataset WHERE RandomV = 1234
+SELECT * FROM Project2Dataset WHERE RandomV > 2500 AND RandomV < 2700
 SELECT * FROM Project2Dataset WHERE RandomV != 0001

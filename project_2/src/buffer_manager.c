@@ -130,12 +130,8 @@ void buffer_manager_init(BufferManager *bm) {
   }
 }
 
-/**
- * Get the block containing the specified `block_id` from the buffer pool.
- *
- * `block_id` is 1-indexed.
- */
-const Block *buffer_manager_get_block(BufferManager *bm, uint8_t block_id) {
+const Block *buffer_manager_get_block(BufferManager *bm, uint8_t block_id,
+                                      bool *is_swapped_in) {
   if (bm == NULL || block_id == 0) {
     return NULL;
   }
@@ -149,6 +145,9 @@ const Block *buffer_manager_get_block(BufferManager *bm, uint8_t block_id) {
               "because the memory buffers are full\n",
               block_id);
       return NULL;
+    }
+    if (is_swapped_in != NULL) {
+      *is_swapped_in = true;
     }
   }
   return &bm->blocks[block_idx];

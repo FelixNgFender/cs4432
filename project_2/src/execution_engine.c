@@ -12,7 +12,7 @@ static int execution_engine_create_index(ExecutionEngine *ee) {
   }
 
   Record records[NUM_RECORDS];
-  if (record_manager_scan_records(&ee->record_manager, records) !=
+  if (record_manager_scan_records(&ee->record_manager, records, NULL) !=
       NUM_RECORDS) {
     fprintf(stderr, "Error: Failed to fetch %d records while building index\n",
             NUM_RECORDS);
@@ -30,6 +30,7 @@ static int execution_engine_execute_equality_query(ExecutionEngine *ee,
   }
 
   const char *query_type = NULL;
+  size_t num_blocks_swapped_in = 0;
   Record records_to_report[RECORD_REPORT_SIZE];
   size_t num_records_found;
   if (ee->index_manager.is_built) {
@@ -37,18 +38,18 @@ static int execution_engine_execute_equality_query(ExecutionEngine *ee,
     size_t num_locs = index_manager_get_record_locations_within_range(
         &ee->index_manager, v1, v1 + 1, locs);
     if (num_locs > RECORD_REPORT_SIZE) {
-      printf(
-          "Warning: More than %d (%zu) records found, only showing first %d\n",
-          RECORD_REPORT_SIZE, num_locs, RECORD_REPORT_SIZE);
+      printf("Warning: More than %d records found, only showing first %d\n",
+             RECORD_REPORT_SIZE, RECORD_REPORT_SIZE);
       num_locs = RECORD_REPORT_SIZE;
     }
-    num_records_found = record_manager_fetch_records(
-        &ee->record_manager, locs, num_locs, records_to_report);
+    num_records_found =
+        record_manager_fetch_records(&ee->record_manager, locs, num_locs,
+                                     &num_blocks_swapped_in, records_to_report);
     query_type = "Array-based index";
   } else {
     Record records[NUM_RECORDS];
-    if (record_manager_scan_records(&ee->record_manager, records) !=
-        NUM_RECORDS) {
+    if (record_manager_scan_records(&ee->record_manager, records,
+                                    &num_blocks_swapped_in) != NUM_RECORDS) {
       fprintf(stderr, "Error: Failed to table scan while executing query\n");
       return -1;
     }
@@ -58,10 +59,9 @@ static int execution_engine_execute_equality_query(ExecutionEngine *ee,
       if (records[i].random == v1) {
         records_to_report[num_records_found++] = records[i];
         if (num_records_found >= RECORD_REPORT_SIZE) {
-          printf(
-              "Warning: More than %d (%zu) records found, only showing first "
-              "%d\n",
-              RECORD_REPORT_SIZE, num_records_found, RECORD_REPORT_SIZE);
+          printf("Warning: More than %d records found, only showing first "
+                 "%d\n",
+                 RECORD_REPORT_SIZE, RECORD_REPORT_SIZE);
           break;
         }
       }
@@ -73,6 +73,7 @@ static int execution_engine_execute_equality_query(ExecutionEngine *ee,
     record_print(&records_to_report[i]);
   }
   printf("Index type used: %s\n", query_type);
+  printf("Number of data files read: %zu\n", num_blocks_swapped_in);
   return 0;
 }
 
@@ -83,6 +84,7 @@ static int execution_engine_execute_range_query(ExecutionEngine *ee,
   }
 
   const char *query_type = NULL;
+  size_t num_blocks_swapped_in = 0;
   Record records_to_report[RECORD_REPORT_SIZE];
   size_t num_records_found;
   if (ee->index_manager.is_built) {
@@ -90,18 +92,18 @@ static int execution_engine_execute_range_query(ExecutionEngine *ee,
     size_t num_locs = index_manager_get_record_locations_within_range(
         &ee->index_manager, v1 + 1, v2, locs);
     if (num_locs > RECORD_REPORT_SIZE) {
-      printf(
-          "Warning: More than %d (%zu) records found, only showing first %d\n",
-          RECORD_REPORT_SIZE, num_locs, RECORD_REPORT_SIZE);
+      printf("Warning: More than %d records found, only showing first %d\n",
+             RECORD_REPORT_SIZE, RECORD_REPORT_SIZE);
       num_locs = RECORD_REPORT_SIZE;
     }
-    num_records_found = record_manager_fetch_records(
-        &ee->record_manager, locs, num_locs, records_to_report);
+    num_records_found =
+        record_manager_fetch_records(&ee->record_manager, locs, num_locs,
+                                     &num_blocks_swapped_in, records_to_report);
     query_type = "Hash-based index";
   } else {
     Record records[NUM_RECORDS];
-    if (record_manager_scan_records(&ee->record_manager, records) !=
-        NUM_RECORDS) {
+    if (record_manager_scan_records(&ee->record_manager, records,
+                                    &num_blocks_swapped_in) != NUM_RECORDS) {
       fprintf(stderr, "Error: Failed to table scan while executing query\n");
       return -1;
     }
@@ -111,10 +113,9 @@ static int execution_engine_execute_range_query(ExecutionEngine *ee,
       if (records[i].random > v1 && records[i].random < v2) {
         records_to_report[num_records_found++] = records[i];
         if (num_records_found >= RECORD_REPORT_SIZE) {
-          printf(
-              "Warning: More than %d (%zu) records found, only showing first "
-              "%d\n",
-              RECORD_REPORT_SIZE, num_records_found, RECORD_REPORT_SIZE);
+          printf("Warning: More than %d records found, only showing first "
+                 "%d\n",
+                 RECORD_REPORT_SIZE, RECORD_REPORT_SIZE);
           break;
         }
       }
@@ -126,6 +127,7 @@ static int execution_engine_execute_range_query(ExecutionEngine *ee,
     record_print(&records_to_report[i]);
   }
   printf("Index type used: %s\n", query_type);
+  printf("Number of data files read: %zu\n", num_blocks_swapped_in);
   return 0;
 }
 
@@ -136,9 +138,10 @@ static int execution_engine_execute_inequality_query(ExecutionEngine *ee,
   }
 
   const char *query_type = "Table Scan";
+  size_t num_blocks_swapped_in = 0;
   Record records[NUM_RECORDS];
-  if (record_manager_scan_records(&ee->record_manager, records) !=
-      NUM_RECORDS) {
+  if (record_manager_scan_records(&ee->record_manager, records,
+                                  &num_blocks_swapped_in) != NUM_RECORDS) {
     fprintf(stderr, "Error: Failed to table scan while executing query\n");
     return -1;
   }
@@ -149,9 +152,9 @@ static int execution_engine_execute_inequality_query(ExecutionEngine *ee,
     if (records[i].random != v1) {
       records_to_report[num_records_found++] = records[i];
       if (num_records_found >= RECORD_REPORT_SIZE) {
-        printf("Warning: More than %d (%zu) records found, only showing first "
+        printf("Warning: More than %d records found, only showing first "
                "%d\n",
-               RECORD_REPORT_SIZE, num_records_found, RECORD_REPORT_SIZE);
+               RECORD_REPORT_SIZE, RECORD_REPORT_SIZE);
         break;
       }
     }
@@ -160,6 +163,7 @@ static int execution_engine_execute_inequality_query(ExecutionEngine *ee,
     record_print(&records_to_report[i]);
   }
   printf("Index type used: %s\n", query_type);
+  printf("Number of data files read: %zu\n", num_blocks_swapped_in);
   return 0;
 }
 

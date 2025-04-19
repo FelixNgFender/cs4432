@@ -12,7 +12,13 @@ typedef struct BufferManager {
 } BufferManager;
 
 void buffer_manager_init(BufferManager *bm);
-const Block *buffer_manager_get_block(BufferManager *bm, uint8_t block_id);
+/**
+ * Get the block containing the specified `block_id` from the buffer pool.
+ *
+ * `block_id` is 1-indexed.
+ */
+const Block *buffer_manager_get_block(BufferManager *bm, uint8_t block_id,
+                                      bool *is_swapped_in);
 int buffer_manager_pin_block(BufferManager *bm, uint8_t block_id);
 int buffer_manager_unpin_block(BufferManager *bm, uint8_t block_id);
 
