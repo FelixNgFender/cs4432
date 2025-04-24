@@ -1,0 +1,7 @@
+SELECT * FROM Project3Dataset WHERE RandomV = 0369
+SELECT * FROM Project3Dataset WHERE RandomV > 0355 AND RandomV < 0499
+SELECT * FROM Project3Dataset WHERE RandomV != 0238
+CREATE INDEX ON Project3Dataset (RandomV)
+SELECT * FROM Project3Dataset WHERE RandomV = 0369
+SELECT * FROM Project3Dataset WHERE RandomV > 0355 AND RandomV < 0499
+SELECT * FROM Project3Dataset WHERE RandomV != 0238
