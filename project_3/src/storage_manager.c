@@ -33,11 +33,17 @@ void storage_manager_read_block(Table table, uint8_t block_id,
   char block_path[FILENAME_MAX];
   get_block_path(table, block_id, block_path);
 
+  printf("Reading block %d from %s\n", block_id, block_path);
   FILE *block_fp = fopen(block_path, "r");
+  if (block_fp == NULL) {
+    handle_error("Error opening block file for reading");
+  }
+
   fseek(block_fp, 0, SEEK_SET);
   if (fread(dst, 1, BLOCK_SIZE, block_fp) != BLOCK_SIZE) {
     handle_error("Error reading from block file");
   }
+
   fclose(block_fp);
 }
 
@@ -51,9 +57,14 @@ void storage_manager_write_block(Table table, uint8_t block_id,
   get_block_path(table, block_id, block_path);
 
   FILE *block_fp = fopen(block_path, "w");
+  if (block_fp == NULL) {
+    handle_error("Error opening block file for writing");
+  }
+
   fseek(block_fp, 0, SEEK_SET);
   if (fwrite(src, 1, BLOCK_SIZE, block_fp) != BLOCK_SIZE) {
     handle_error("Error writing to block file");
   }
+
   fclose(block_fp);
 }

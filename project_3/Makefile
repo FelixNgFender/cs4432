@@ -14,11 +14,9 @@ TARGET_FLAGS=
 TARGET=main
 SRC_DIR=src
 BIN_DIR=bin
-TEST_DATA_PREFIX=A
-TEST_BASE_DIR=Project3Dataset
-TEST_DIR=$(TEST_BASE_DIR)/Project3Dataset-$(TEST_DATA_PREFIX)
-TEST_DATA=$(wildcard $(TEST_DIR)/$(TEST_DATA_PREFIX)*.txt)
-TEST_COPY_DIR=$(BIN_DIR)/$(TEST_DIR)
+TEST_DIR=Project3Dataset
+TEST_DATA=$(wildcard $(TEST_DIR)/*.txt $(TEST_DIR)/*/*.txt)
+TEST_COPY_DIR=$(BIN_DIR)
 OBJ_DIR=obj
 SRC=$(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/*/*.c)
 HEADERS=$(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h)
@@ -30,7 +28,7 @@ SUBMITNAME=project_3.zip
 default: build
 
 .PHONY: build
-build: $(BIN_DIR) $(BIN_DIR)/$(TARGET) $(TEST_COPY_DIR)
+build: $(BIN_DIR) $(BIN_DIR)/$(TARGET)
 
 .PHONY: release
 release: CFLAGS=$(RELEASE_CFLAGS)
@@ -40,10 +38,7 @@ release: build
 
 $(BIN_DIR):
 	mkdir -p $@
-
-$(TEST_COPY_DIR): $(BIN_DIR)
-	mkdir -p $@
-	cp $(TEST_DATA) $@
+	cp -r $(TEST_DIR)/ $@
 
 # compile
 $(OBJ): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
@@ -60,7 +55,7 @@ run: build
 
 .PHONY: test
 test: build
-	$(BIN_DIR)/$(TARGET) $(TARGET_FLAGS) < $(TEST_BASE_DIR)/in.txt
+	$(BIN_DIR)/$(TARGET) $(TARGET_FLAGS) < $(TEST_DIR)/in.txt
 
 .PHONY: debug
 debug: build
@@ -68,7 +63,7 @@ debug: build
 
 .PHONY: clean
 clean:
-	$(RM) $(OBJ) $(BIN_DIR)/$(TARGET) $(TEST_COPY_DIR)/*
+	$(RM) -r $(OBJ) $(BIN_DIR)/$(TARGET) $(TEST_COPY_DIR)/*
 
 .PHONY: valgrind
 valgrind: CFLAGS=$(VALGRIND_CFLAGS)
@@ -79,4 +74,4 @@ valgrind: build
 .PHONY: submit
 submit:
 	$(RM) $(SUBMITNAME)
-	zip $(SUBMITNAME) $(SRC) $(HEADERS) $(TEST_DIR)/* Makefile README.*
+	zip $(SUBMITNAME) $(SRC) $(HEADERS) $(TEST_DATA) Makefile README.*
