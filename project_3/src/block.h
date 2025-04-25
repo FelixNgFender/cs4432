@@ -2,6 +2,7 @@
 #define BLOCK_H
 
 #include "config.h"
+#include "storage_manager.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -10,6 +11,7 @@
  */
 typedef struct Block {
   unsigned char content[BLOCK_SIZE];
+  Table table;
   // 1-indexed. -1 indicates a free block.
   int8_t id;
   bool dirty;

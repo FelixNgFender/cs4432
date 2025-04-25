@@ -24,9 +24,9 @@ void hash_index_cleanup(HashIndex *index) {
       HashIndexEntry *next_entry = entry->next;
 
       // free the list of locations
-      LocationNode *loc = entry->locations;
+      RecordNode *loc = entry->record;
       while (loc != NULL) {
-        LocationNode *next_loc = loc->next;
+        RecordNode *next_loc = loc->next;
         free(loc);
         loc = next_loc;
       }
@@ -58,16 +58,16 @@ void hash_index_build(HashIndex *index, const Record *records,
     if (entry == NULL) {
       entry = check_malloc(sizeof(HashIndexEntry));
       entry->key = key;
-      entry->locations = NULL;
+      entry->record = NULL;
       entry->next = index->buckets[h];
       index->buckets[h] = entry;
     }
 
     // add location to the front of the list
-    LocationNode *new_loc = check_malloc(sizeof(LocationNode));
-    new_loc->location = records[i].location;
-    new_loc->next = entry->locations;
-    entry->locations = new_loc;
+    RecordNode *new_loc = check_malloc(sizeof(RecordNode));
+    new_loc->record = records[i];
+    new_loc->next = entry->record;
+    entry->record = new_loc;
   }
 }
 
@@ -82,9 +82,9 @@ void hash_index_print(const HashIndex *index) {
     HashIndexEntry *entry = index->buckets[i];
     while (entry != NULL) {
       printf("Key %u: ", entry->key);
-      LocationNode *loc = entry->locations;
+      RecordNode *loc = entry->record;
       while (loc != NULL) {
-        record_location_print(&loc->location);
+        record_print(&loc->record);
         loc = loc->next;
         count++;
       }
@@ -94,9 +94,9 @@ void hash_index_print(const HashIndex *index) {
   printf("Total locations: %zu\n", count);
 }
 
-size_t hash_index_get_locations(const HashIndex *index, uint16_t key,
-                                RecordLocation *locs_out) {
-  if (index == NULL || locs_out == NULL) {
+size_t hash_index_get_records(const HashIndex *index, uint16_t key,
+                              Record *recs_out) {
+  if (index == NULL || recs_out == NULL) {
     return 0;
   }
 
@@ -110,9 +110,9 @@ size_t hash_index_get_locations(const HashIndex *index, uint16_t key,
 
   size_t count = 0;
   if (entry != NULL) {
-    LocationNode *loc = entry->locations;
+    RecordNode *loc = entry->record;
     while (loc != NULL) {
-      locs_out[count++] = loc->location;
+      recs_out[count++] = loc->record;
       loc = loc->next;
     }
   }

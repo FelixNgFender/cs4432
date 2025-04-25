@@ -5,10 +5,10 @@
 #include "record.h"
 #include <stdlib.h>
 
-// entry for a hash bucket (key + list of locations)
+// entry for a hash bucket (key + list of records)
 typedef struct HashIndexEntry {
   uint16_t key;
-  LocationNode *locations;
+  RecordNode *record;
   struct HashIndexEntry *next;
 } HashIndexEntry;
 
@@ -21,7 +21,7 @@ void hash_index_init(HashIndex *index);
 void hash_index_cleanup(HashIndex *index);
 void hash_index_build(HashIndex *index, const Record *records,
                       size_t num_records);
-size_t hash_index_get_locations(const HashIndex *index, uint16_t key,
-                                RecordLocation *locs_out);
+size_t hash_index_get_records(const HashIndex *index, uint16_t key,
+                              Record *recs_out);
 
 #endif // HASH_INDEX_H

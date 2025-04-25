@@ -1,4 +1,6 @@
 #include "execution_engine.h"
+#include "config.h"
+#include "index_manager.h"
 #include <stdio.h>
 
 static int execution_engine_create_index(ExecutionEngine *ee) {
@@ -6,164 +8,60 @@ static int execution_engine_create_index(ExecutionEngine *ee) {
     return -1;
   }
 
-  if (ee->index_manager.is_built) {
-    fprintf(stderr, "Error: Index already built.\n");
+  if (ee->index_manager.is_a_index_built) {
+    return 0;
+  }
+
+  Table table = TABLE_A;
+  Record records[NUM_RECORDS];
+  if (record_manager_scan_records(&ee->record_manager, table, records, NULL) !=
+      NUM_RECORDS) {
+    fprintf(
+        stderr,
+        "Error: Failed to fetch %d records while building index for table %s\n",
+        NUM_RECORDS, table_to_str(table));
+    return -1;
+  }
+  index_manager_build(&ee->index_manager, table, records, NUM_RECORDS);
+
+  return 0;
+}
+
+static int execution_engine_execute_hash_join(ExecutionEngine *ee) {
+  if (ee == NULL) {
     return -1;
   }
 
-  Record records[NUM_RECORDS];
-  if (record_manager_scan_records(&ee->record_manager, records, NULL) !=
-      NUM_RECORDS) {
-    fprintf(stderr, "Error: Failed to fetch %d records while building index\n",
+  if (execution_engine_create_index(ee) != 0) {
+    fprintf(stderr,
+            "Error: Failed to create index for table A for hash join\n");
+    return -1;
+  }
+
+  Record records_b[NUM_RECORDS];
+  if (record_manager_scan_records(&ee->record_manager, TABLE_B, records_b,
+                                  NULL) != NUM_RECORDS) {
+    fprintf(stderr,
+            "Error: Failed to fetch %d records from table B for hash join\n",
             NUM_RECORDS);
     return -1;
   }
-  index_manager_build(&ee->index_manager, records, NUM_RECORDS);
 
-  return 0;
-}
-
-static int execution_engine_execute_equality_query(ExecutionEngine *ee,
-                                                   uint16_t v1) {
-  if (ee == NULL) {
-    return -1;
-  }
-
-  const char *query_type = NULL;
-  size_t num_blocks_swapped_in = 0;
-  Record records_to_report[RECORD_REPORT_SIZE];
-  size_t num_records_found;
-  if (ee->index_manager.is_built) {
-    RecordLocation locs[RECORD_REPORT_SIZE];
-    size_t num_locs = index_manager_get_record_locations_within_range(
-        &ee->index_manager, v1, v1 + 1, locs);
-    if (num_locs > RECORD_REPORT_SIZE) {
-      printf("Warning: More than %d records found, only showing first %d\n",
-             RECORD_REPORT_SIZE, RECORD_REPORT_SIZE);
-      num_locs = RECORD_REPORT_SIZE;
-    }
-    num_records_found =
-        record_manager_fetch_records(&ee->record_manager, locs, num_locs,
-                                     &num_blocks_swapped_in, records_to_report);
-    query_type = "Hash-based index";
-  } else {
-    Record records[NUM_RECORDS];
-    if (record_manager_scan_records(&ee->record_manager, records,
-                                    &num_blocks_swapped_in) != NUM_RECORDS) {
-      fprintf(stderr, "Error: Failed to table scan while executing query\n");
-      return -1;
-    }
-
-    num_records_found = 0;
-    for (size_t i = 0; i < NUM_RECORDS; i++) {
-      if (records[i].random == v1) {
-        records_to_report[num_records_found++] = records[i];
-        if (num_records_found >= RECORD_REPORT_SIZE) {
-          printf("Warning: More than %d records found, only showing first "
-                 "%d\n",
-                 RECORD_REPORT_SIZE, RECORD_REPORT_SIZE);
-          break;
-        }
-      }
-    }
-    query_type = "Table Scan";
-  }
-
-  for (size_t i = 0; i < num_records_found; i++) {
-    record_print(&records_to_report[i]);
-  }
-  printf("Index type used: %s\n", query_type);
-  printf("Number of data files read: %zu\n", num_blocks_swapped_in);
-  return 0;
-}
-
-static int execution_engine_execute_range_query(ExecutionEngine *ee,
-                                                uint16_t v1, uint16_t v2) {
-  if (ee == NULL) {
-    return -1;
-  }
-
-  const char *query_type = NULL;
-  size_t num_blocks_swapped_in = 0;
-  Record records_to_report[RECORD_REPORT_SIZE];
-  size_t num_records_found;
-  if (ee->index_manager.is_built) {
-    RecordLocation locs[RECORD_REPORT_SIZE];
-    size_t num_locs = index_manager_get_record_locations_within_range(
-        &ee->index_manager, v1 + 1, v2, locs);
-    if (num_locs > RECORD_REPORT_SIZE) {
-      printf("Warning: More than %d records found, only showing first %d\n",
-             RECORD_REPORT_SIZE, RECORD_REPORT_SIZE);
-      num_locs = RECORD_REPORT_SIZE;
-    }
-    num_records_found =
-        record_manager_fetch_records(&ee->record_manager, locs, num_locs,
-                                     &num_blocks_swapped_in, records_to_report);
-    query_type = "Array-based index";
-  } else {
-    Record records[NUM_RECORDS];
-    if (record_manager_scan_records(&ee->record_manager, records,
-                                    &num_blocks_swapped_in) != NUM_RECORDS) {
-      fprintf(stderr, "Error: Failed to table scan while executing query\n");
-      return -1;
-    }
-
-    num_records_found = 0;
-    for (size_t i = 0; i < NUM_RECORDS; i++) {
-      if (records[i].random > v1 && records[i].random < v2) {
-        records_to_report[num_records_found++] = records[i];
-        if (num_records_found >= RECORD_REPORT_SIZE) {
-          printf("Warning: More than %d records found, only showing first "
-                 "%d\n",
-                 RECORD_REPORT_SIZE, RECORD_REPORT_SIZE);
-          break;
-        }
-      }
-    }
-    query_type = "Table Scan";
-  }
-
-  for (size_t i = 0; i < num_records_found; i++) {
-    record_print(&records_to_report[i]);
-  }
-  printf("Index type used: %s\n", query_type);
-  printf("Number of data files read: %zu\n", num_blocks_swapped_in);
-  return 0;
-}
-
-static int execution_engine_execute_inequality_query(ExecutionEngine *ee,
-                                                     uint16_t v1) {
-  if (ee == NULL) {
-    return -1;
-  }
-
-  const char *query_type = "Table Scan";
-  size_t num_blocks_swapped_in = 0;
-  Record records[NUM_RECORDS];
-  if (record_manager_scan_records(&ee->record_manager, records,
-                                  &num_blocks_swapped_in) != NUM_RECORDS) {
-    fprintf(stderr, "Error: Failed to table scan while executing query\n");
-    return -1;
-  }
-
-  Record records_to_report[RECORD_REPORT_SIZE];
-  size_t num_records_found = 0;
+  printf("A.Col1   A.Col2      B.Col1   B.Col2\n");
   for (size_t i = 0; i < NUM_RECORDS; i++) {
-    if (records[i].random != v1) {
-      records_to_report[num_records_found++] = records[i];
-      if (num_records_found >= RECORD_REPORT_SIZE) {
-        printf("Warning: More than %d records found, only showing first "
-               "%d\n",
-               RECORD_REPORT_SIZE, RECORD_REPORT_SIZE);
-        break;
-      }
+    Record *record_b = &records_b[i];
+    Record matched_records_a[RECORD_REPORT_SIZE];
+    size_t num_records_found = index_manager_get_records_within_range(
+        &ee->index_manager, record_b->random, record_b->random + 1,
+        matched_records_a);
+    for (size_t j = 0; j < num_records_found; j++) {
+      Record *record_a = &matched_records_a[j];
+      printf("Name%03hhu, address%03hhu, Name%03hhu, address%03hhu\n",
+             record_a->name, record_a->address, record_b->name,
+             record_b->address);
     }
   }
-  for (size_t i = 0; i < num_records_found; i++) {
-    record_print(&records_to_report[i]);
-  }
-  printf("Index type used: %s\n", query_type);
-  printf("Number of data files read: %zu\n", num_blocks_swapped_in);
+
   return 0;
 }
 
@@ -191,14 +89,11 @@ int execution_engine_execute_plan(ExecutionEngine *ee, QueryPlan plan) {
 
   Command command_type = plan.command_type;
   switch (command_type) {
-  case COMMAND_CREATE_INDEX:
-    return execution_engine_create_index(ee);
-  case COMMAND_EQUALITY_QUERY:
-    return execution_engine_execute_equality_query(ee, plan.v1);
-  case COMMAND_RANGE_QUERY:
-    return execution_engine_execute_range_query(ee, plan.v1, plan.v2);
-  case COMMAND_INEQUALITY_QUERY:
-    return execution_engine_execute_inequality_query(ee, plan.v1);
+  case COMMAND_HASH_JOIN:
+    return execution_engine_execute_hash_join(ee);
+  case COMMAND_HASH_AGGREGATION:
+    // TODO: implement
+    return -1;
   default:
     fprintf(stderr, "Error: Unknown command type.\n");
     return -1;

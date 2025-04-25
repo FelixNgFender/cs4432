@@ -1,35 +1,12 @@
 #include "index_manager.h"
 #include <stdio.h>
 
-static int compare_record_locations(const void *a, const void *b) {
-  if (a == NULL || b == NULL) {
-    return 0;
-  }
-
-  const RecordLocation *ra = (const RecordLocation *)a;
-  const RecordLocation *rb = (const RecordLocation *)b;
-  if (ra->block_id != rb->block_id) {
-    return (int)ra->block_id - (int)rb->block_id;
-  }
-
-  return (int)ra->record_id - (int)rb->record_id;
-}
-
-static void sort_record_locations(RecordLocation *locs, size_t count) {
-  if (locs == NULL || count == 0) {
-    return;
-  }
-
-  qsort(locs, count, sizeof(RecordLocation), compare_record_locations);
-}
-
 void index_manager_init(IndexManager *index) {
   if (index == NULL) {
     return;
   }
 
-  index->is_built = false;
-  array_index_init(&index->array_index);
+  index->is_a_index_built = false;
   hash_index_init(&index->hash_index);
 }
 
@@ -38,7 +15,6 @@ void index_manager_cleanup(IndexManager *index) {
     return;
   }
 
-  array_index_cleanup(&index->array_index);
   hash_index_cleanup(&index->hash_index);
 }
 
@@ -48,39 +24,41 @@ void index_manager_print(const IndexManager *index) {
   }
 
   printf("Index Manager:\n");
-  array_index_print(&index->array_index);
   hash_index_print(&index->hash_index);
 }
 
-void index_manager_build(IndexManager *index, const Record *records,
-                         size_t num_records) {
-  if (index == NULL || records == NULL) {
+void index_manager_build(IndexManager *index, Table table,
+                         const Record *records, size_t num_records) {
+  if (index == NULL || table == TABLE_UNKNOWN || records == NULL) {
     return;
   }
 
-  array_index_build(&index->array_index, records, num_records);
-  hash_index_build(&index->hash_index, records, num_records);
-  index->is_built = true;
-  printf("The hash-based and array-based indexes are built successfully.\n");
+  switch (table) {
+  case TABLE_A:
+    if (index->is_a_index_built) {
+      return;
+    }
+    hash_index_build(&index->hash_index, records, num_records);
+    index->is_a_index_built = true;
+    break;
+  default:
+    fprintf(stderr, "Error: Invalid table name.\n");
+    break;
+  }
+  return;
 }
 
-size_t
-index_manager_get_record_locations_within_range(const IndexManager *index,
-                                                uint16_t lower, uint16_t upper,
-                                                RecordLocation *locs_out) {
-  if (index == NULL || lower >= upper || locs_out == NULL || !index->is_built) {
+size_t index_manager_get_records_within_range(const IndexManager *index,
+                                              uint16_t lower, uint16_t upper,
+                                              Record *recs_out) {
+  if (index == NULL || lower >= upper || recs_out == NULL ||
+      !index->is_a_index_built) {
     return 0;
   }
 
-  size_t num_locations = 0;
+  size_t num_recs = 0;
   if (lower + 1 == upper) {
-    num_locations =
-        hash_index_get_locations(&index->hash_index, lower, locs_out);
-  } else {
-    num_locations =
-        array_index_get_locations(&index->array_index, lower, upper, locs_out);
+    num_recs = hash_index_get_records(&index->hash_index, lower, recs_out);
   }
-  // PERF: sort before passed to record manager to reduce page swaps
-  sort_record_locations(locs_out, num_locations);
-  return num_locations;
+  return num_recs;
 }

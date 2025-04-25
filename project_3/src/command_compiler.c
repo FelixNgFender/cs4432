@@ -3,23 +3,19 @@
 #include <stdio.h>
 #include <string.h>
 
+#define HASH_JOIN_QUERY                                                        \
+  "SELECT A.Col1, A.Col2, B.Col1, B.Col2 FROM A, B WHERE "                     \
+  "A." DEFAULT_INDEX_COLUMN " = B." DEFAULT_INDEX_COLUMN
+
 static Command query_to_command(const char *s) {
   if (s == NULL) {
     return COMMAND_UNKNOWN;
   }
 
-  if (strncmp(s, "CREATE INDEX ON", strlen("CREATE INDEX ON")) == 0) {
-    return COMMAND_CREATE_INDEX;
-  } else if (strncmp(s, "SELECT * FROM", strlen("SELECT * FROM")) == 0) {
-    if (strstr(s, "WHERE") != NULL) {
-      if (strstr(s, "!=") != NULL) {
-        return COMMAND_INEQUALITY_QUERY;
-      } else if (strstr(s, "=") != NULL) {
-        return COMMAND_EQUALITY_QUERY;
-      } else if (strstr(s, ">") != NULL && strstr(s, "<") != NULL) {
-        return COMMAND_RANGE_QUERY;
-      }
-    }
+  if (strncmp(s, HASH_JOIN_QUERY, strlen(HASH_JOIN_QUERY)) == 0) {
+    return COMMAND_HASH_JOIN;
+  } else if (strncmp(s, "SELECT Col2, ", strlen("SELECT Col2, ")) == 0) {
+    return COMMAND_HASH_AGGREGATION;
   }
   return COMMAND_UNKNOWN;
 }
@@ -47,71 +43,20 @@ static int input_parse_and_validate_line(char *line, CommandArgs *args_out) {
     return -1;
   }
 
-  uint16_t v1 = 0;
-  uint16_t v2 = 0;
-
   args_out->command_type = query_to_command(line);
   switch (args_out->command_type) {
-  case COMMAND_CREATE_INDEX:
-    if (strncmp(line, "CREATE INDEX ON " DEFAULT_TABLE_NAME " (RandomV)\n",
-                strlen("CREATE INDEX ON " DEFAULT_TABLE_NAME " (RandomV)\n")) !=
+  case COMMAND_HASH_JOIN:
+    if (strncmp(line, HASH_JOIN_QUERY "\n", strlen(HASH_JOIN_QUERY "\n")) !=
         0) {
-      fprintf(stderr,
-              "Error: Incorrectly formatted command. Expected format: "
-              "CREATE INDEX ON %s (%s)\n",
-              args_out->table_name, args_out->index_column);
       return -1;
     }
     break;
-  case COMMAND_EQUALITY_QUERY:
-    if (sscanf(line,
-               "SELECT * FROM " DEFAULT_TABLE_NAME " WHERE RandomV = %4hu\n",
-               &v1) != 1) {
-      fprintf(stderr,
-              "Error: Incorrectly formatted command. Expected format: "
-              "SELECT * FROM %s WHERE %s = <value>\n",
-              DEFAULT_TABLE_NAME, DEFAULT_INDEX_COLUMN);
-      return -1;
-    }
-    args_out->v1 = v1;
-    break;
-  case COMMAND_INEQUALITY_QUERY:
-    if (sscanf(line,
-               "SELECT * FROM " DEFAULT_TABLE_NAME " WHERE RandomV != %4hu\n",
-               &v1) != 1) {
-      fprintf(stderr,
-              "Error: Incorrectly formatted command. Expected format: "
-              "SELECT * FROM %s WHERE %s != <value>\n",
-              DEFAULT_TABLE_NAME, DEFAULT_INDEX_COLUMN);
-      return -1;
-    }
-    args_out->v1 = v1;
-    break;
-  case COMMAND_RANGE_QUERY:
-    if (sscanf(line,
-               "SELECT * FROM " DEFAULT_TABLE_NAME
-               " WHERE RandomV > %4hu AND RandomV "
-               "< %4hu\n",
-               &v1, &v2) != 2) {
-      fprintf(stderr,
-              "Error: Incorrectly formatted command. Expected format: "
-              "SELECT * FROM %s WHERE %s > <value> AND %s < <value>\n",
-              DEFAULT_TABLE_NAME, DEFAULT_INDEX_COLUMN, DEFAULT_INDEX_COLUMN);
-      return -1;
-    }
-    if (v1 >= v2) {
-      fprintf(stderr,
-              "Error: Invalid range. Expected format: "
-              "SELECT * FROM %s WHERE %s > <value> AND %s < <value>\n",
-              DEFAULT_TABLE_NAME, DEFAULT_INDEX_COLUMN, DEFAULT_INDEX_COLUMN);
-      return -1;
-    }
-    args_out->v1 = v1;
-    args_out->v2 = v2;
+  case COMMAND_HASH_AGGREGATION:
+    // TODO: implement
+    return -1;
     break;
   default:
-    fprintf(stderr, "Error: Invalid command. Valid instructions are "
-                    "CREATE INDEX and SELECT.\n");
+    fprintf(stderr, "Error: Invalid command.\n");
     return -1;
   }
 
@@ -158,19 +103,11 @@ void command_compiler_start(CommandCompiler *cc) {
 
       CommandArgs args = {
           .command_type = COMMAND_UNKNOWN,
-          .table_name = DEFAULT_TABLE_NAME,
-          .index_column = DEFAULT_INDEX_COLUMN,
-          .v1 = 0,
-          .v2 = 0,
       };
 
       if (input_parse_and_validate_line(line, &args) != -1) {
         QueryPlan plan = {
             .command_type = args.command_type,
-            .table_name = args.table_name,
-            .index_column = args.index_column,
-            .v1 = args.v1,
-            .v2 = args.v2,
         };
         if (execution_engine_execute_plan(&cc->execution_engine, plan) != -1) {
           get_time(&end_time);

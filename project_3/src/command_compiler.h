@@ -9,10 +9,6 @@ typedef struct CommandCompiler {
 
 typedef struct CommandArgs {
   Command command_type;
-  const char *table_name;
-  const char *index_column;
-  uint16_t v1;
-  uint16_t v2;
 } CommandArgs;
 
 void command_compiler_init(CommandCompiler *cc);

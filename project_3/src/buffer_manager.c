@@ -7,14 +7,14 @@
  *
  * `block_id` is 1-indexed. Returns -1 if not found.
  */
-static int8_t buffer_manager_get_block_idx(const BufferManager *bm,
+static int8_t buffer_manager_get_block_idx(const BufferManager *bm, Table table,
                                            uint8_t block_id) {
-  if (bm == NULL || block_id == 0) {
+  if (bm == NULL || table == TABLE_UNKNOWN || block_id == 0) {
     return -1;
   }
 
   for (uint8_t i = 0; i < bm->num_blocks; i++) {
-    if (bm->blocks[i].id == block_id) {
+    if (bm->blocks[i].table == table && bm->blocks[i].id == block_id) {
       return i;
     }
   }
@@ -33,7 +33,7 @@ static int8_t buffer_manager_find_free_block_idx(const BufferManager *bm) {
   }
 
   for (uint8_t i = 0; i < bm->num_blocks; i++) {
-    if (bm->blocks[i].id == -1) {
+    if (bm->blocks[i].table == TABLE_UNKNOWN && bm->blocks[i].id == -1) {
       return i;
     }
   }
@@ -57,7 +57,7 @@ static int8_t buffer_manager_evict_block(BufferManager *bm) {
     Block *block = &bm->blocks[idx];
     int8_t block_id = block->id;
 
-    if (block_id == -1) {
+    if (block->table == TABLE_UNKNOWN || block_id == -1) {
       fprintf(stderr,
               "Error: Block %d is still empty. No reasons to evict any "
               "disk blocks.\n",
@@ -71,10 +71,11 @@ static int8_t buffer_manager_evict_block(BufferManager *bm) {
 
     // Write dirty block to disk
     if (block->dirty) {
-      storage_manager_write_block(block_id, block->content);
+      storage_manager_write_block(block->table, block_id, block->content);
     }
 
     // Reset block metadata
+    block->table = TABLE_UNKNOWN;
     block->id = -1;
     block->dirty = false;
     block->pinned = false;
@@ -92,9 +93,9 @@ static int8_t buffer_manager_evict_block(BufferManager *bm) {
  *
  * `block_id` is 1-indexed.
  */
-static int8_t buffer_manager_swap_in_block(BufferManager *bm,
+static int8_t buffer_manager_swap_in_block(BufferManager *bm, Table table,
                                            uint8_t block_id) {
-  if (bm == NULL || block_id == 0) {
+  if (bm == NULL || table == TABLE_UNKNOWN || block_id == 0) {
     return -1;
   }
 
@@ -108,9 +109,10 @@ static int8_t buffer_manager_swap_in_block(BufferManager *bm,
   }
 
   Block *new_block = &bm->blocks[free_block_idx];
-  storage_manager_read_block(block_id, new_block->content);
+  storage_manager_read_block(table, block_id, new_block->content);
 
   // update block metadata
+  new_block->table = table;
   new_block->id = block_id;
   new_block->dirty = false;
   new_block->pinned = false;
@@ -130,15 +132,15 @@ void buffer_manager_init(BufferManager *bm) {
   }
 }
 
-const Block *buffer_manager_get_block(BufferManager *bm, uint8_t block_id,
-                                      bool *is_swapped_in) {
-  if (bm == NULL || block_id == 0) {
+const Block *buffer_manager_get_block(BufferManager *bm, Table table,
+                                      uint8_t block_id, bool *is_swapped_in) {
+  if (bm == NULL || table == TABLE_UNKNOWN || block_id == 0) {
     return NULL;
   }
 
-  int8_t block_idx = buffer_manager_get_block_idx(bm, block_id);
+  int8_t block_idx = buffer_manager_get_block_idx(bm, table, block_id);
   if (block_idx == -1) {
-    block_idx = buffer_manager_swap_in_block(bm, block_id);
+    block_idx = buffer_manager_swap_in_block(bm, table, block_id);
     if (block_idx == -1) {
       fprintf(stderr,
               "The corresponding block #%d cannot be accessed from disk "
@@ -151,53 +153,4 @@ const Block *buffer_manager_get_block(BufferManager *bm, uint8_t block_id,
     }
   }
   return &bm->blocks[block_idx];
-}
-
-int buffer_manager_pin_block(BufferManager *bm, uint8_t block_id) {
-  if (bm == NULL || block_id == 0) {
-    return -1;
-  }
-
-  int8_t block_idx = buffer_manager_get_block_idx(bm, block_id);
-  if (block_idx == -1) {
-    block_idx = buffer_manager_swap_in_block(bm, block_id);
-    if (block_idx == -1) {
-      fprintf(stderr,
-              "The corresponding block #%d cannot be pinned because the memory "
-              "buffers are full\n",
-              block_id);
-      return -1;
-    }
-  }
-
-  Block *block = &bm->blocks[block_idx];
-  if (block->pinned) {
-    return 0;
-  }
-
-  block->pinned = true;
-  return 0;
-}
-
-int buffer_manager_unpin_block(BufferManager *bm, uint8_t block_id) {
-  if (bm == NULL || block_id == 0) {
-    return -1;
-  }
-
-  int8_t block_idx = buffer_manager_get_block_idx(bm, block_id);
-  if (block_idx == -1) {
-    fprintf(stderr,
-            "The corresponding block %d cannot be unpinned because it "
-            "is not in memory.\n",
-            block_id);
-    return -1;
-  }
-
-  Block *block = &bm->blocks[block_idx];
-  if (!block->pinned) {
-    return 0;
-  }
-
-  block->pinned = false;
-  return 0;
 }

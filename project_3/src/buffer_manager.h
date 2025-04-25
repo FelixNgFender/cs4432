@@ -17,9 +17,7 @@ void buffer_manager_init(BufferManager *bm);
  *
  * `block_id` is 1-indexed.
  */
-const Block *buffer_manager_get_block(BufferManager *bm, uint8_t block_id,
-                                      bool *is_swapped_in);
-int buffer_manager_pin_block(BufferManager *bm, uint8_t block_id);
-int buffer_manager_unpin_block(BufferManager *bm, uint8_t block_id);
+const Block *buffer_manager_get_block(BufferManager *bm, Table table,
+                                      uint8_t block_id, bool *is_swapped_in);
 
 #endif // BUFFER_MANAGER_H

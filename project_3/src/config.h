@@ -1,8 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define DATA_FILE_PREFIX "B"
-#define DISK_DIR "./Project3Dataset/Project3Dataset-" DATA_FILE_PREFIX
+#define DISK_DIR "./Project3Dataset/Project3Dataset-"
 #define NUM_BLOCKS 99
 #define BLOCK_SIZE 4000
 #define NUM_RECORDS_PER_BLOCK 100
@@ -23,10 +22,8 @@
 #define MAX_RANDOM 500
 
 #define DEFAULT_INDEX_COLUMN "RandomV"
-#define DEFAULT_TABLE_NAME "Project3Dataset"
 
-#define HASH_INDEX_SIZE 250
-#define ARRAY_INDEX_SIZE 500
+#define HASH_INDEX_SIZE 50
 
 #define RECORD_REPORT_SIZE NUM_RECORDS
 

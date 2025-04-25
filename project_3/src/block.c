@@ -7,6 +7,7 @@ void block_init(Block *block) {
   }
 
   memset(block->content, 0, BLOCK_SIZE);
+  block->table = TABLE_UNKNOWN;
   block->id = -1;
   block->dirty = false;
   block->pinned = false;

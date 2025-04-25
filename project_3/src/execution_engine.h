@@ -7,18 +7,18 @@
 
 typedef enum Command {
   COMMAND_UNKNOWN,
-  COMMAND_CREATE_INDEX,
-  COMMAND_EQUALITY_QUERY,
-  COMMAND_RANGE_QUERY,
-  COMMAND_INEQUALITY_QUERY
+  COMMAND_HASH_JOIN,
+  COMMAND_HASH_AGGREGATION,
 } Command;
+
+typedef enum AggregationFn {
+  AGGREGATION_FN_UNKNOWN,
+  AGGREGATION_FN_SUM,
+  AGGREGATION_FN_AVERAGE,
+} AggregationFn;
 
 typedef struct QueryPlan {
   const Command command_type;
-  const char *table_name;
-  const char *index_column;
-  const uint16_t v1;
-  const uint16_t v2;
 } QueryPlan;
 
 typedef struct ExecutionEngine {

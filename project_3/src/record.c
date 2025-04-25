@@ -7,9 +7,10 @@ void record_print(const Record *record) {
     return;
   }
 
-  printf("F%02hhu-Rec%03hhu, Name%03hhu, address%03hhu, %04hu...\n",
-         record->location.block_id, record->location.record_id, record->name,
-         record->address, record->random);
+  printf("%s%02hhu-Rec%03hhu, Name%03hhu, address%03hhu, %04hu...\n",
+         table_to_str(record->table), record->location.block_id,
+         record->location.record_id, record->name, record->address,
+         record->random);
 }
 
 void record_location_print(const RecordLocation *location) {
@@ -21,8 +22,9 @@ void record_location_print(const RecordLocation *location) {
          location->record_id);
 }
 
-int record_parse_from_buffer(const unsigned char *src, Record *record_out) {
-  if (record_out == NULL || src == NULL) {
+int record_parse_from_buffer(const unsigned char *src, Table table,
+                             Record *record_out) {
+  if (record_out == NULL || table == TABLE_UNKNOWN || src == NULL) {
     return -1;
   }
 
@@ -36,8 +38,15 @@ int record_parse_from_buffer(const unsigned char *src, Record *record_out) {
     return -1;
   }
 
-  if (prefix != DATA_FILE_PREFIX[0]) {
-    fprintf(stderr, "Error: Invalid prefix in record: %s\n", src);
+  switch (prefix) {
+  case 'A':
+    record_out->table = TABLE_A;
+    break;
+  case 'B':
+    record_out->table = TABLE_B;
+    break;
+  default:
+    fprintf(stderr, "Error: Invalid table prefix: %c\n", prefix);
     return -1;
   }
 
@@ -55,34 +64,13 @@ int record_parse_from_buffer(const unsigned char *src, Record *record_out) {
   return 0;
 }
 
-int record_parse_from_block(const Block *block, uint8_t record_id,
+int record_parse_from_block(const Block *block, Table table, uint8_t record_id,
                             Record *record_out) {
-  if (block == NULL || record_id == 0 || record_id > NUM_RECORDS_PER_BLOCK) {
+  if (block == NULL || table == TABLE_UNKNOWN || record_id == 0 ||
+      record_id > NUM_RECORDS_PER_BLOCK) {
     return -1;
   }
 
   return record_parse_from_buffer(block->content + RECORD_OFFSET(record_id),
-                                  record_out);
-}
-
-int record_save_to_block(Block *block, uint8_t record_id,
-                         const Record *new_record) {
-  if (block == NULL || record_id == 0 || record_id >= NUM_RECORDS_PER_BLOCK) {
-    return -1;
-  }
-
-  char buffer[RECORD_SIZE + 1];
-  int written =
-      snprintf(buffer, sizeof(buffer),
-               "F%2hhu-Rec%3hhu, Name%3hhu, address%3hhu, %4hu...",
-               new_record->location.block_id, new_record->location.record_id,
-               new_record->name, new_record->address, new_record->random);
-
-  if (written <= 0 || written >= RECORD_SIZE + 1) {
-    return -1;
-  }
-
-  block_set_content(block, RECORD_OFFSET(record_id), (unsigned char *)buffer,
-                    RECORD_SIZE);
-  return 0;
+                                  table, record_out);
 }
