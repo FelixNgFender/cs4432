@@ -9,6 +9,8 @@ typedef struct CommandCompiler {
 
 typedef struct CommandArgs {
   Command command_type;
+  Table aggregate_table;
+  AggregateFn aggregate_fn;
 } CommandArgs;
 
 void command_compiler_init(CommandCompiler *cc);

@@ -1,4 +1,5 @@
 #include "command_compiler.h"
+#include "execution_engine.h"
 #include "util.h"
 #include <stdio.h>
 #include <string.h>
@@ -15,7 +16,7 @@ static Command query_to_command(const char *s) {
   if (strncmp(s, HASH_JOIN_QUERY, strlen(HASH_JOIN_QUERY)) == 0) {
     return COMMAND_HASH_JOIN;
   } else if (strncmp(s, "SELECT Col2, ", strlen("SELECT Col2, ")) == 0) {
-    return COMMAND_HASH_AGGREGATION;
+    return COMMAND_HASH_AGGREGATE;
   }
   return COMMAND_UNKNOWN;
 }
@@ -43,6 +44,9 @@ static int input_parse_and_validate_line(char *line, CommandArgs *args_out) {
     return -1;
   }
 
+  char aggregate_fn[13];
+  char aggregate_table;
+
   args_out->command_type = query_to_command(line);
   switch (args_out->command_type) {
   case COMMAND_HASH_JOIN:
@@ -51,9 +55,36 @@ static int input_parse_and_validate_line(char *line, CommandArgs *args_out) {
       return -1;
     }
     break;
-  case COMMAND_HASH_AGGREGATION:
-    // TODO: implement
-    return -1;
+  case COMMAND_HASH_AGGREGATE:
+    if (sscanf(line, "SELECT Col2, %s FROM %c GROUP BY Col2\n", aggregate_fn,
+               &aggregate_table) != 2) {
+      fprintf(stderr, "Error: Incorrectly formatted aggregate command.");
+      return -1;
+    }
+
+    if (strncmp(aggregate_fn, "SUM(" DEFAULT_INDEX_COLUMN ")",
+                strlen("SUM(" DEFAULT_INDEX_COLUMN ")")) == 0) {
+      args_out->aggregate_fn = AGGREGATE_FN_SUM;
+    } else if (strncmp(aggregate_fn, "AVG(" DEFAULT_INDEX_COLUMN ")",
+                       strlen("AVG(" DEFAULT_INDEX_COLUMN ")")) == 0) {
+      args_out->aggregate_fn = AGGREGATE_FN_AVERAGE;
+    } else {
+      fprintf(stderr, "Error: Unsupported aggregate function.\n");
+      return -1;
+    }
+
+    switch (aggregate_table) {
+    case 'A':
+      args_out->aggregate_table = TABLE_A;
+      break;
+    case 'B':
+      args_out->aggregate_table = TABLE_B;
+      break;
+    default:
+      fprintf(stderr, "Error: Unsupported table in aggregate.\n");
+      return -1;
+    }
+
     break;
   default:
     fprintf(stderr, "Error: Invalid command.\n");
@@ -103,11 +134,15 @@ void command_compiler_start(CommandCompiler *cc) {
 
       CommandArgs args = {
           .command_type = COMMAND_UNKNOWN,
+          .aggregate_table = TABLE_UNKNOWN,
+          .aggregate_fn = AGGREGATE_FN_UNKNOWN,
       };
 
       if (input_parse_and_validate_line(line, &args) != -1) {
         QueryPlan plan = {
             .command_type = args.command_type,
+            .aggregate_table = args.aggregate_table,
+            .aggregate_fn = args.aggregate_fn,
         };
         if (execution_engine_execute_plan(&cc->execution_engine, plan) != -1) {
           get_time(&end_time);

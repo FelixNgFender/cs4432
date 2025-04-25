@@ -65,6 +65,36 @@ static int execution_engine_execute_hash_join(ExecutionEngine *ee) {
   return 0;
 }
 
+static int execution_engine_execute_hash_aggregate(ExecutionEngine *ee,
+                                                   Table table,
+                                                   AggregateFn aggregate_fn) {
+  if (ee == NULL || table == TABLE_UNKNOWN ||
+      aggregate_fn == AGGREGATE_FN_UNKNOWN) {
+    return -1;
+  }
+
+  Record records[NUM_RECORDS];
+  if (record_manager_scan_records(&ee->record_manager, table, records, NULL) !=
+      NUM_RECORDS) {
+    fprintf(
+        stderr,
+        "Error: Failed to fetch %d records from table %s for hash aggregate\n",
+        NUM_RECORDS, table_to_str(table));
+    return -1;
+  }
+
+  AggregateTable aggregate_table;
+  aggregate_table_init(&aggregate_table);
+  for (size_t i = 0; i < NUM_RECORDS; i++) {
+    Record *record = &records[i];
+    aggregate_table_add_entry(&aggregate_table, record->address,
+                              record->random);
+  }
+
+  aggregate_table_print(&aggregate_table, aggregate_fn);
+  return 0;
+}
+
 void execution_engine_init(ExecutionEngine *ee) {
   if (ee == NULL) {
     return;
@@ -91,9 +121,9 @@ int execution_engine_execute_plan(ExecutionEngine *ee, QueryPlan plan) {
   switch (command_type) {
   case COMMAND_HASH_JOIN:
     return execution_engine_execute_hash_join(ee);
-  case COMMAND_HASH_AGGREGATION:
-    // TODO: implement
-    return -1;
+  case COMMAND_HASH_AGGREGATE:
+    return execution_engine_execute_hash_aggregate(ee, plan.aggregate_table,
+                                                   plan.aggregate_fn);
   default:
     fprintf(stderr, "Error: Unknown command type.\n");
     return -1;
