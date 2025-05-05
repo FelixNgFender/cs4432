@@ -42,15 +42,15 @@ c. If it cannot be done in one pass, then how many passes are needed? Describe
 the algorithm that uses the number of passes you suggest? What will be the I/O
 cost?
 
-| Operator | One pass?            | Reason + Algorithm                                                                                                          | I/O Cost                                  |
-| -------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| (a)      | No                   | Need to sort or hash to find duplicates. External sort: 2 passes needed. - Phase 1: No constraints - Phase 2: B\(R\) <= M^2 | External Sort cost: 3 \* B\(R\) = 3,000   |
-| (b)      | Yes                  | Already sorted on X. Just scan once, aggregate on the fly. No constraints.                                                  | B\(R\) = 1,000                            |
-| \(c\)    | Yes                  | The groups must fit in M - 1 = 199 buffers.                                                                                 | B\(R\) = 1,000                            |
-| (d)      | No                   | Must do external sorting. 2 passes: Phase 1: No constraints. Phase 2: B\(R\) <= M^2 (1000 <= 200^2)                         | Same: External Sort cost                  |
-| (e)      | Yes                  | Use index scan (only 70 blocks) to access tuples ordered by X. 70 < 200 ⇒ fits in memory.                                   | 0 if index is in-memory                   |
-| (f)      | No (sort-merge join) | 2 passes. No constraints in Phase 1. B\(R\) + B(S) <= M^2 (1,150 <= 200^2) in Phase 2.                                      | 3 \* (B\(R\) + B(S)) = 3 \* 1,150 = 3,450 |
-| (g)      | Yes                  | Just scan R and S, output tuples. Min(B\(R\), B(S)) <= M-1 (150 <= 199)                                                     | B\(R\) + B(S) = 1,000 + 150 = 1,150       |
+| Operator | One pass? | Reason + Algorithm                                                                                                          | I/O Cost                                |
+| -------- | --------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| (a)      | No        | Need to sort or hash to find duplicates. External sort: 2 passes needed. - Phase 1: No constraints - Phase 2: B\(R\) <= M^2 | External Sort cost: 3 \* B\(R\) = 3,000 |
+| (b)      | Yes       | Already sorted on X. Just scan once, aggregate on the fly. No constraints.                                                  | B\(R\) = 1,000                          |
+| \(c\)    | Yes       | The groups must fit in M - 1 = 199 buffers.                                                                                 | B\(R\) = 1,000                          |
+| (d)      | No        | Must do external sorting. 2 passes: Phase 1: No constraints. Phase 2: B\(R\) <= M^2 (1000 <= 200^2)                         | Same: External Sort cost                |
+| (e)      | Yes       | Use index scan (only 70 blocks) to access tuples ordered by X. 70 < 200 ⇒ fits in memory.                                   | 0 if index is in-memory                 |
+| (f)      | Yes       | Because B(S) <= M - 1, all of S can be retrieved into memory. Read each tuple of R and join.                                | B\(R\) + B(S) = 1,150                   |
+| (g)      | Yes       | Because we don't need to eliminate duplicates, we scan and output R and then S. So M >= 1                                   | B\(R\) + B(S) = 1,000 + 150 = 1,150     |
 
 ## Problem 2: Estimation of Relation Size
 
